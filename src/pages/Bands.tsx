@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import { Plus, Search, Music, Globe, Loader2, X, Edit, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageUpload } from '../components/ImageUpload';
@@ -16,6 +17,7 @@ interface Band {
 }
 
 export default function Bands() {
+  const { isAdmin } = useAuth();
   const [bands, setBands] = useState<Band[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -61,13 +63,15 @@ export default function Bands() {
                     className="pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none w-full md:w-64"
                 />
             </div>
-            <button
-                onClick={() => setIsCreateOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-purple-500/20 whitespace-nowrap"
-            >
-                <Plus className="w-5 h-5" />
-                Add Band
-            </button>
+            {isAdmin && (
+                <button
+                    onClick={() => setIsCreateOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-purple-500/20 whitespace-nowrap"
+                >
+                    <Plus className="w-5 h-5" />
+                    Add Band
+                </button>
+            )}
         </div>
       </div>
 
@@ -87,12 +91,14 @@ export default function Bands() {
                             <Music className="w-12 h-12 text-slate-700" />
                         </div>
                     )}
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); setSelectedBand(band); }}
-                        className="absolute top-2 right-2 p-1.5 bg-slate-900/60 backdrop-blur rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-600"
-                    >
-                        <Edit className="w-4 h-4" />
-                    </button>
+                    {isAdmin && (
+                        <button 
+                            onClick={(e) => { e.stopPropagation(); setSelectedBand(band); }}
+                            className="absolute top-2 right-2 p-1.5 bg-slate-900/60 backdrop-blur rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-600"
+                        >
+                            <Edit className="w-4 h-4" />
+                        </button>
+                    )}
                 </div>
                 <div className="p-4">
                     <h3 className="font-bold text-white text-lg truncate">{band.name}</h3>

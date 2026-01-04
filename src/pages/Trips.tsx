@@ -161,7 +161,11 @@ function CreateTripModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onCl
     }, [isOpen]);
 
     const fetchFestivalOptions = async () => {
-        const { data } = await supabase.from('festivals').select('id, name, start_date').order('start_date');
+        const { data } = await supabase
+            .from('festivals')
+            .select('id, name, start_date')
+            .eq('is_public', true)
+            .order('start_date');
         setFestivals(data || []);
     };
 

@@ -1,11 +1,17 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import type { User, Session } from '@supabase/supabase-js';
+import type { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
+
+interface User extends SupabaseUser {
+  role?: string;
+}
 
 interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
   signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
   verifyOtp: (email: string, token: string) => Promise<{ data: any; error: Error | null }>;
   signOut: () => Promise<{ error: Error | null }>;
@@ -19,20 +25,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const fetchUserRole = async (userId: string) => {
+        try {
+            const { data, error } = await supabase.from('profiles').select('role').eq('id', userId).single();
+            if (error) {
+                console.warn('Error fetching user role:', error);
+                return null;
+            }
+            return (data as any)?.role;
+        } catch (e) {
+            console.error('Exception fetching role:', e);
+            return null;
+        }
+    };
 
-    // Listen for changes on auth state (logged in, signed out, etc.)
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
+    const initSession = async () => {
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            setSession(session);
+            let currentUser = session?.user ?? null;
+            if (currentUser) {
+                const role = await fetchUserRole(currentUser.id);
+                if (role) currentUser = { ...currentUser, role };
+            }
+            setUser(currentUser as User);
+        } catch (error) {
+            console.error('Error initializing session:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    initSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      try {
+          setSession(session);
+          let currentUser = session?.user ?? null;
+          if (currentUser) {
+             const role = await fetchUserRole(currentUser.id);
+             if (role) currentUser = { ...currentUser, role };
+          }
+          setUser(currentUser as User);
+      } catch (e) {
+         console.error('Error in auth state change:', e);
+      } finally {
+          setLoading(false);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -62,8 +101,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return { error };
   };
 
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
+  const isSuperAdmin = user?.role === 'superadmin';
+
   return (
-    <AuthContext.Provider value={{ user, session, loading, signInWithOtp, verifyOtp, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, isAdmin, isSuperAdmin, signInWithOtp, verifyOtp, signOut }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 
 interface Trip {
   id: string;

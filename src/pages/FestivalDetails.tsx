@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { ImageUpload } from '../components/ImageUpload';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Plus, Trash2, MapPin, Calendar, Tent, Loader2, Music, X, Edit } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, MapPin, Calendar, Tent, Loader2, Music, X, Edit, ThumbsUp, ThumbsDown, Heart } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Festival {
@@ -28,14 +29,18 @@ interface Show {
   bands: {
     name: string;
   };
+  duration?: number;
+  is_late_night?: boolean;
 }
 
 export default function FestivalDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user, isAdmin } = useAuth();
   const [festival, setFestival] = useState<Festival | null>(null);
   const [stages, setStages] = useState<Stage[]>([]);
   const [shows, setShows] = useState<Show[]>([]);
+  const [userInteractions, setUserInteractions] = useState<Record<string, 'like' | 'must_see' | 'meh'>>({});
   const [selectedDayLineup, setSelectedDayLineup] = useState<string>('all'); // 'all' | 'YYYY-MM-DD'
   const [loading, setLoading] = useState(true);
   const [newStageName, setNewStageName] = useState('');
@@ -54,18 +59,7 @@ export default function FestivalDetails() {
       return days;
   }, [festival]);
 
-  const filteredShows = React.useMemo(() => {
-      if (selectedDayLineup === 'all') return shows;
-      
-      return shows.filter(show => {
-          const showDate = new Date(show.start_time);
-          if (show.is_late_night) {
-              showDate.setDate(showDate.getDate() - 1);
-          }
-          const dateStr = showDate.toISOString().split('T')[0];
-          return dateStr === selectedDayLineup;
-      });
-  }, [shows, selectedDayLineup]);
+
 
   const groupedLineup = React.useMemo(() => {
       const daysToRender = selectedDayLineup === 'all' ? festivalDays : [new Date(selectedDayLineup)];
@@ -96,8 +90,51 @@ export default function FestivalDetails() {
   useEffect(() => {
     if (id) {
       fetchFestivalData();
+      if (user) fetchInteractions();
     }
-  }, [id]);
+  }, [id, user]);
+
+  const fetchInteractions = async () => {
+      if (!user) return;
+      const { data } = await supabase
+          .from('show_interactions')
+          .select('show_id, interaction_type')
+          .eq('user_id', user.id);
+      
+      if (data) {
+          const map: Record<string, any> = {};
+          data.forEach((i: any) => map[i.show_id] = i.interaction_type);
+          setUserInteractions(map);
+      }
+  };
+
+  const handleInteraction = async (showId: string, type: 'like' | 'must_see' | 'meh') => {
+      if (!user) return;
+      const current = userInteractions[showId];
+      
+      try {
+        if (current === type) {
+            // Remove
+            const { error } = await supabase.from('show_interactions').delete().match({ user_id: user.id, show_id: showId });
+            if (error) throw error;
+            const newMap = { ...userInteractions };
+            delete newMap[showId];
+            setUserInteractions(newMap);
+        } else {
+            // Upsert
+            const { error } = await supabase.from('show_interactions').upsert({
+                user_id: user.id,
+                show_id: showId,
+                interaction_type: type
+            } as any, { onConflict: 'user_id, show_id' });
+            
+            if (error) throw error;
+            setUserInteractions(prev => ({ ...prev, [showId]: type }));
+        }
+      } catch (err) {
+          console.error('Error updating interaction:', err);
+      }
+  };
 
   const fetchFestivalData = async () => {
     try {
@@ -225,7 +262,14 @@ export default function FestivalDetails() {
                 </button>
             </div>
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-slate-950 to-transparent p-8">
-                <h1 className="text-4xl font-bold text-white mb-2">{festival.name}</h1>
+                <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
+                    {festival.name}
+                    {isAdmin && !festival.is_public && (
+                        <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded border border-orange-500/50 uppercase tracking-wider font-bold">
+                            Draft
+                        </span>
+                    )}
+                </h1>
                 <div className="flex gap-6 text-slate-300">
                     <div className="flex items-center gap-2">
                         <Calendar className="w-5 h-5 text-purple-400" />
@@ -249,7 +293,7 @@ export default function FestivalDetails() {
       />
 
       {/* Stages Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div>
             <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-white flex items-center gap-3">
@@ -262,24 +306,26 @@ export default function FestivalDetails() {
             </div>
 
             <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                <div className="p-4 border-b border-slate-800 bg-slate-900/50">
-                    <form onSubmit={handleAddStage} className="flex gap-2">
-                        <input 
-                            type="text" 
-                            placeholder="Add new stage name..." 
-                            className="flex-1 bg-slate-800 border-none rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 placeholder-slate-500"
-                            value={newStageName}
-                            onChange={e => setNewStageName(e.target.value)}
-                        />
-                        <button 
-                            type="submit"
-                            disabled={stageLoading} 
-                            className="bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-lg transition-colors"
-                        >
-                            {stageLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
-                        </button>
-                    </form>
-                </div>
+                {isAdmin && (
+                    <div className="p-4 border-b border-slate-800 bg-slate-900/50">
+                        <form onSubmit={handleAddStage} className="flex gap-2">
+                            <input 
+                                type="text" 
+                                placeholder="Add new stage name..." 
+                                className="flex-1 bg-slate-800 border-none rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 placeholder-slate-500"
+                                value={newStageName}
+                                onChange={e => setNewStageName(e.target.value)}
+                            />
+                            <button 
+                                type="submit"
+                                disabled={stageLoading} 
+                                className="bg-purple-600 hover:bg-purple-500 text-white p-2 rounded-lg transition-colors"
+                            >
+                                {stageLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                            </button>
+                        </form>
+                    </div>
+                )}
                 
                 <div className="divide-y divide-slate-800">
                     <AnimatePresence>
@@ -292,12 +338,14 @@ export default function FestivalDetails() {
                                 className="p-4 flex items-center justify-between group hover:bg-slate-800/50 transition-colors"
                             >
                                 <span className="font-medium text-slate-200">{stage.name}</span>
-                                <button 
-                                    onClick={() => handleDeleteStage(stage.id)}
-                                    className="text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
+                                {isAdmin && (
+                                    <button 
+                                        onClick={() => handleDeleteStage(stage.id)}
+                                        className="text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                )}
                             </motion.div>
                         ))}
                     </AnimatePresence>
@@ -310,19 +358,21 @@ export default function FestivalDetails() {
             </div>
         </div>
 
-        <div className="flex flex-col h-full">
+        <div className="lg:col-span-2 flex flex-col h-full">
             <div className="flex items-center justify-between mb-6">
                  <h2 className="text-2xl font-bold text-white flex items-center gap-3">
                     <Music className="w-6 h-6 text-pink-500" />
                     Lineup
                 </h2>
-                 <button 
-                    onClick={() => setIsAddShowOpen(true)}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-pink-600 hover:bg-pink-500 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                    <Plus className="w-4 h-4" />
-                    Add Show
-                </button>
+                 {isAdmin && (
+                    <button 
+                        onClick={() => setIsAddShowOpen(true)}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-pink-600 hover:bg-pink-500 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Add Show
+                    </button>
+                 )}
             </div>
 
             {/* Day Filter Tabs */}
@@ -399,13 +449,40 @@ export default function FestivalDetails() {
                                                          </div>
                                                      </div>
 
-                                                     <button 
-                                                        onClick={() => handleDeleteShow(show.id)}
-                                                        className="p-2 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-full transition opacity-0 group-hover:opacity-100"
-                                                        title="Remove show"
-                                                     >
-                                                         <Trash2 className="w-4 h-4" />
-                                                     </button>
+                                                     {/* Interactions & Admin Actions */}
+                                                     <div className="flex items-center gap-1">
+                                                         <button 
+                                                            onClick={() => handleInteraction(show.id, 'like')} 
+                                                            title="Like"
+                                                            className={`p-2 rounded-full transition ${userInteractions[show.id] === 'like' ? 'text-green-400 bg-green-500/10' : 'text-slate-600 hover:text-green-400 hover:bg-slate-800'}`}
+                                                         >
+                                                             <ThumbsUp className="w-4 h-4" />
+                                                         </button>
+                                                         <button 
+                                                            onClick={() => handleInteraction(show.id, 'must_see')} 
+                                                            title="Must See"
+                                                            className={`p-2 rounded-full transition ${userInteractions[show.id] === 'must_see' ? 'text-pink-500 bg-pink-500/10' : 'text-slate-600 hover:text-pink-500 hover:bg-slate-800'}`}
+                                                         >
+                                                             <Heart className={`w-4 h-4 ${userInteractions[show.id] === 'must_see' ? 'fill-current' : ''}`} />
+                                                         </button>
+                                                         <button 
+                                                            onClick={() => handleInteraction(show.id, 'meh')} 
+                                                            title="Meh"
+                                                            className={`p-2 rounded-full transition ${userInteractions[show.id] === 'meh' ? 'text-orange-400 bg-orange-500/10' : 'text-slate-600 hover:text-orange-400 hover:bg-slate-800'}`}
+                                                         >
+                                                             <ThumbsDown className="w-4 h-4" />
+                                                         </button>
+
+                                                         {isAdmin && (
+                                                            <button 
+                                                                onClick={() => handleDeleteShow(show.id)}
+                                                                className="ml-2 p-2 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-full transition opacity-0 group-hover:opacity-100"
+                                                                title="Remove show"
+                                                            >
+                                                                <Trash2 className="w-4 h-4" />
+                                                            </button>
+                                                         )}
+                                                     </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -707,7 +784,8 @@ function EditFestivalModal({ isOpen, onClose, festival, onUpdated }: { isOpen: b
         description: festival.description || '',
         start_date: festival.start_date,
         end_date: festival.end_date,
-        image_url: festival.image_url || ''
+        image_url: festival.image_url || '',
+        is_public: festival.is_public
     });
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
@@ -718,7 +796,8 @@ function EditFestivalModal({ isOpen, onClose, festival, onUpdated }: { isOpen: b
             description: festival.description || '',
             start_date: festival.start_date,
             end_date: festival.end_date,
-            image_url: festival.image_url || ''
+            image_url: festival.image_url || '',
+            is_public: festival.is_public
         });
     }, [festival]);
 
@@ -824,6 +903,20 @@ function EditFestivalModal({ isOpen, onClose, festival, onUpdated }: { isOpen: b
                                         value={formData.description}
                                         onChange={e => setFormData({...formData, description: e.target.value})}
                                     />
+                                </div>
+                                <div>
+                                    <label className="flex items-center gap-3 p-3 bg-slate-800 border border-slate-700 rounded-lg cursor-pointer hover:bg-slate-800/80 transition">
+                                        <input 
+                                            type="checkbox"
+                                            className="w-5 h-5 rounded border-slate-600 text-purple-600 focus:ring-purple-500 bg-slate-900"
+                                            checked={formData.is_public}
+                                            onChange={e => setFormData({...formData, is_public: e.target.checked})}
+                                        />
+                                        <div>
+                                            <span className="block text-sm font-medium text-white">Public Visible</span>
+                                            <span className="block text-xs text-slate-400">Allow users to see and add this festival to trips.</span>
+                                        </div>
+                                    </label>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-slate-300 mb-1">Cover Image</label>

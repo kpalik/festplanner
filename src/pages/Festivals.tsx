@@ -21,27 +21,35 @@ export default function Festivals() {
   const [festivals, setFestivals] = useState<Festival[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const { } = useAuth();
+  const { isAdmin } = useAuth();
   const navigate = useNavigate();
-  // TODO: Add proper Role check
-  const isAdmin = true; // Temporary for development
 
   useEffect(() => {
     fetchFestivals();
-  }, []);
+  }, [isAdmin]);
 
   const fetchFestivals = async () => {
+    console.log('Fetching festivals... isAdmin:', isAdmin);
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('festivals')
         .select('*')
         .order('start_date', { ascending: true });
+      
+      if (!isAdmin) {
+        query = query.eq('is_public', true);
+      }
+
+      console.log('Executing query...');
+      const { data, error } = await query;
+      console.log('Query result:', { dataLength: data?.length, error });
       
       if (error) throw error;
       setFestivals(data || []);
     } catch (error) {
       console.error('Error fetching festivals:', error);
     } finally {
+      console.log('Finished fetching festivals. Setting loading to false.');
       setLoading(false);
     }
   };
@@ -87,6 +95,11 @@ export default function Festivals() {
                 <div className="absolute top-2 right-2 bg-slate-950/80 backdrop-blur px-2 py-1 rounded text-xs font-medium text-slate-300">
                     {new Date(festival.start_date).getFullYear()}
                 </div>
+                {isAdmin && !festival.is_public && (
+                    <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded text-xs font-bold uppercase tracking-wider shadow-lg">
+                        Draft
+                    </div>
+                )}
               </div>
               <div className="p-5">
                 <h3 className="text-xl font-bold text-white mb-2 group-hover:text-purple-400 transition-colors">{festival.name}</h3>
@@ -128,7 +141,8 @@ function CreateFestivalModal({ isOpen, onClose, onCreated }: { isOpen: boolean; 
         start_date: '',
         end_date: '',
         website_url: '',
-        image_url: ''
+        image_url: '',
+        is_public: false
     });
     const [loading, setLoading] = useState(false);
     const { user } = useAuth();
@@ -143,7 +157,6 @@ function CreateFestivalModal({ isOpen, onClose, onCreated }: { isOpen: boolean; 
              
              const { error } = await supabase.from('festivals').insert([{
                  ...formData,
-                 is_public: false, // Draft by default
                  created_by: user?.id 
              }] as any);
 
@@ -151,7 +164,7 @@ function CreateFestivalModal({ isOpen, onClose, onCreated }: { isOpen: boolean; 
              
              onCreated();
              onClose();
-             setFormData({ name: '', description: '', start_date: '', end_date: '', website_url: '', image_url: '' });
+             setFormData({ name: '', description: '', start_date: '', end_date: '', website_url: '', image_url: '', is_public: false });
         } catch (err: any) {
             console.error(err);
             alert(err.message);
@@ -246,6 +259,20 @@ function CreateFestivalModal({ isOpen, onClose, onCreated }: { isOpen: boolean; 
                                         onChange={e => setFormData({...formData, image_url: e.target.value})}
                                         placeholder="https://"
                                     />
+                                </div>
+                                <div>
+                                    <label className="flex items-center gap-3 p-3 bg-slate-800 border border-slate-700 rounded-lg cursor-pointer hover:bg-slate-800/80 transition">
+                                        <input 
+                                            type="checkbox"
+                                            className="w-5 h-5 rounded border-slate-600 text-purple-600 focus:ring-purple-500 bg-slate-900"
+                                            checked={formData.is_public}
+                                            onChange={e => setFormData({...formData, is_public: e.target.checked})}
+                                        />
+                                        <div>
+                                            <span className="block text-sm font-medium text-white">Public Visible</span>
+                                            <span className="block text-xs text-slate-400">Allow users to see and add this festival to trips.</span>
+                                        </div>
+                                    </label>
                                 </div>
 
                                 <div className="pt-4 flex justify-end gap-3">
