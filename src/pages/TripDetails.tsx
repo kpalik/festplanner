@@ -195,9 +195,9 @@ export default function TripDetails() {
                 tripName: trip.name
               }
             });
-          } catch (invErr) {
-            console.warn('Failed to send invite email (Edge Function not deployed?):', invErr);
-            // Don't block UI, just log warning
+          } catch (invErr: any) {
+            console.warn('Failed to send invite email:', invErr);
+            alert('Warning: Only invite created in DB. Email failed to send: ' + (invErr.message || invErr));
           }
         }
 
