@@ -16,6 +16,7 @@ interface Trip {
         image_url: string | null;
         start_date: string;
     } | null;
+    trip_members: { count: number }[];
 }
 
 interface FestivalOption {
@@ -49,6 +50,9 @@ export default function Trips() {
                 name,
                 image_url,
                 start_date
+            ),
+            trip_members (
+                count
             )
         `)
                 .order('created_at', { ascending: false });
@@ -119,7 +123,7 @@ export default function Trips() {
                                 <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
                                     <div className="flex items-center gap-1">
                                         <Users className="w-3 h-3" />
-                                        1 Member
+                                        {trip.trip_members[0]?.count || 1} Members
                                     </div>
                                     <button className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
                                         View Details →

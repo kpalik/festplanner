@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Festivals from './pages/Festivals';
 import FestivalDetails from './pages/FestivalDetails';
 import Bands from './pages/Bands';
+import BandDetails from './pages/BandDetails';
 import Trips from './pages/Trips';
 import TripDetails from './pages/TripDetails';
 
@@ -17,13 +18,14 @@ function App() {
         <div className="min-h-screen bg-slate-950 text-slate-100 font-sans">
           <Routes>
             <Route path="/login" element={<Login />} />
-            
+
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/festivals" element={<Festivals />} />
                 <Route path="/festivals/:id" element={<FestivalDetails />} />
                 <Route path="/bands" element={<Bands />} />
+                <Route path="/bands/:id" element={<BandDetails />} />
                 <Route path="/trips" element={<Trips />} />
                 <Route path="/trips/:id" element={<TripDetails />} />
               </Route>

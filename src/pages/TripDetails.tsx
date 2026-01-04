@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, MapPin, Music, Heart, ThumbsUp, ThumbsDown, Trophy, Crown, CheckCircle2, Clock, CircleHelp } from 'lucide-react';
+import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, MapPin, Music, Heart, ThumbsUp, ThumbsDown, Trophy, Crown, CheckCircle2, Clock, CircleHelp, Trash } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -82,7 +82,7 @@ export default function TripDetails() {
 
   const fetchTripData = async () => {
     try {
-      setLoading(true);
+      if (!trip) setLoading(true);
 
       const { data: tripData, error: tripError } = await supabase
         .from('trips')
@@ -166,7 +166,8 @@ export default function TripDetails() {
 
       let insertPayload: any = {
         trip_id: trip.id,
-        role: 'member'
+        role: 'member',
+        status: 'pending'
       };
 
       if (profile) {
@@ -174,9 +175,6 @@ export default function TripDetails() {
       } else {
         // Create pending invite
         insertPayload.invitation_email = email;
-        // Note: If you really wanted to create a Profile, you could try:
-        // supabase.from('profiles').insert({ email, id: uuidv4() }) 
-        // but without auth user it's disconnected. Better to rely on email mapping later.
       }
 
       const { error } = await supabase.from('trip_members').insert([insertPayload]);
@@ -184,12 +182,47 @@ export default function TripDetails() {
         if (error.code === '23505') alert('User already invited or in trip.');
         else throw error;
       } else {
-        alert(profile ? 'User added to trip!' : 'Invitation sent (User needs to sign up).');
+        // 2. If new user, try to send invite email via Edge Function
+        if (!profile) {
+          try {
+            // Determine base URL for redirect
+            // In dev: localhost, in prod: window.location.origin
+            // We don't necessarily need to pass it if Edge Function handles it, but good practice.
+            await supabase.functions.invoke('invite-user', {
+              body: {
+                email,
+                tripId: trip.id,
+                tripName: trip.name
+              }
+            });
+          } catch (invErr) {
+            console.warn('Failed to send invite email (Edge Function not deployed?):', invErr);
+            // Don't block UI, just log warning
+          }
+        }
+
         fetchTripData();
         setIsInviteOpen(false);
       }
     } catch (e: any) {
+      console.error('Error inviting:', e);
       alert('Error inviting: ' + e.message);
+    }
+  };
+
+  const handleDeleteTrip = async () => {
+    if (!trip) return;
+    if (!confirm("Are you sure you want to delete this trip? This action cannot be undone.")) return;
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.from('trips').delete().eq('id', trip.id);
+      if (error) throw error;
+      navigate('/trips');
+    } catch (error: any) {
+      console.error("Error deleting trip:", error);
+      alert("Failed to delete trip: " + error.message);
+      setLoading(false);
     }
   };
 
@@ -244,13 +277,22 @@ export default function TripDetails() {
               </div>
             </div>
             {isOrganizer && (
-              <button
-                onClick={() => setIsInviteOpen(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition"
-              >
-                <UserPlus className="w-4 h-4" />
-                Invite
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setIsInviteOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition"
+                >
+                  <UserPlus className="w-4 h-4" />
+                  Invite
+                </button>
+                <button
+                  onClick={handleDeleteTrip}
+                  className="p-2 bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-500 rounded-lg transition"
+                  title="Delete Trip"
+                >
+                  <Trash className="w-4 h-4" />
+                </button>
+              </div>
             )}
           </div>
 
@@ -428,11 +470,11 @@ function TripLineup({ shows, days, members, interactions, currentUserId, onInter
                 </div>
 
                 <div className="flex-1">
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-2 md:gap-0">
                     <h4 className="text-lg font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">
                       {show.bands.name}
                     </h4>
-                    <div className="flex items-center gap-2 bg-slate-950/50 p-1.5 rounded-full border border-slate-800/50">
+                    <div className="flex items-center gap-2 bg-slate-950/50 p-1.5 rounded-full border border-slate-800/50 self-start md:self-auto">
                       <VoteButton type="meh" active={myVote === 'meh'} onClick={() => handleVote(show.id, 'meh')} />
                       <VoteButton type="question" active={!myVote} onClick={() => handleVote(show.id, 'none')} />
                       <VoteButton type="like" active={myVote === 'like'} onClick={() => handleVote(show.id, 'like')} />
@@ -440,23 +482,7 @@ function TripLineup({ shows, days, members, interactions, currentUserId, onInter
                     </div>
                   </div>
 
-                  {/* Others Votes */}
-                  {othersVotes.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {othersVotes.map((vote: any) => (
-                        <div key={vote.user_id} className={clsx("text-xs px-2 py-0.5 rounded-full flex items-center gap-1 border",
-                          vote.interaction_type === 'must_see' ? "bg-pink-500/10 border-pink-500/20 text-pink-300" :
-                            vote.interaction_type === 'like' ? "bg-green-500/10 border-green-500/20 text-green-300" :
-                              "bg-orange-500/10 border-orange-500/20 text-orange-300"
-                        )}>
-                          {vote.user_email?.split('@')[0]}
-                          {vote.interaction_type === 'must_see' && <Heart className="w-3 h-3 fill-current" />}
-                          {vote.interaction_type === 'like' && <ThumbsUp className="w-3 h-3" />}
-                          {vote.interaction_type === 'meh' && <ThumbsDown className="w-3 h-3" />}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+
                 </div>
               </div>
             </div>
@@ -509,11 +535,19 @@ function TripRanking({ shows, days, interactions }: any) {
       });
     }
 
-    // Map shows to [Show, Score]
-    const ranked = relevantShows.map((s: Show) => ({
-      show: s,
-      score: map.get(s.id) || 0
-    })).sort((a: any, b: any) => b.score - a.score); // Descending score
+    // Map shows to [Show, Score, Details]
+    const ranked = relevantShows.map((s: Show) => {
+      const showInteractions = interactions.filter((i: any) => i.show_id === s.id && i.interaction_type !== 'none');
+      return {
+        show: s,
+        score: map.get(s.id) || 0,
+        details: showInteractions.map((i: any) => ({
+          user: i.user_email ? i.user_email.split('@')[0] : 'Unknown',
+          type: i.interaction_type,
+          val: i.interaction_type === 'must_see' ? '+3' : i.interaction_type === 'like' ? '+1' : '-1'
+        }))
+      };
+    }).sort((a: any, b: any) => b.score - a.score); // Descending score
 
     return ranked;
   }, [shows, interactions, selectedDay]);
@@ -544,7 +578,7 @@ function TripRanking({ shows, days, interactions }: any) {
       <div className="space-y-3">
         {scores.map((item: any, index: number) => (
           <div key={item.show.id} className="flex items-center gap-4 bg-slate-900 border border-slate-800 p-4 rounded-xl">
-            <div className={clsx("w-8 h-8 flex items-center justify-center font-bold rounded-full",
+            <div className={clsx("w-8 h-8 flex items-center justify-center font-bold rounded-full flex-shrink-0",
               index === 0 ? "bg-yellow-500 text-black" :
                 index === 1 ? "bg-slate-400 text-black" :
                   index === 2 ? "bg-orange-700 text-white" : "bg-slate-800 text-slate-500"
@@ -561,7 +595,18 @@ function TripRanking({ shows, days, interactions }: any) {
 
             <div className="text-right">
               <div className="text-2xl font-black text-white">{item.score > 0 ? `+${item.score}` : item.score}</div>
-              <div className="text-[10px] text-slate-500 uppercase tracking-wider">Points</div>
+              <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Points</div>
+
+              <div className="flex flex-col items-end gap-1">
+                {item.details.map((d: any, i: number) => (
+                  <div key={i} className="text-xs text-slate-400 flex items-center gap-1">
+                    <span className="text-slate-500">{d.user}</span>
+                    <span className={clsx("font-bold", d.type === 'must_see' ? "text-pink-400" : d.type === 'like' ? "text-green-400" : "text-orange-400")}>
+                      {d.val}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         ))}
