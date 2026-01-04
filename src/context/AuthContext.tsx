@@ -25,56 +25,109 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchUserRole = async (userId: string) => {
-        try {
-            const { data, error } = await supabase.from('profiles').select('role').eq('id', userId).single();
-            if (error) {
-                console.warn('Error fetching user role:', error);
-                return null;
-            }
-            return (data as any)?.role;
-        } catch (e) {
-            console.error('Exception fetching role:', e);
-            return null;
+      console.log(`[AuthDebug] ${new Date().toISOString()} Starting fetchUserRole for ${userId}`);
+      try {
+        // Add timeout for role fetch as well
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Role fetch timeout')), 2000)
+        );
+
+        const fetchPromise = supabase.from('profiles').select('role').eq('id', userId).single();
+
+        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
+
+        if (error) {
+          console.warn(`[AuthDebug] ${new Date().toISOString()} Error fetching user role:`, error);
+          return null;
         }
+        console.log(`[AuthDebug] ${new Date().toISOString()} Fetched role:`, data?.role);
+        return data?.role;
+      } catch (e) {
+        console.error(`[AuthDebug] ${new Date().toISOString()} Exception fetching role:`, e);
+        return null;
+      }
+    };
+
+    const handleSession = async (session: Session | null) => {
+      if (!mounted) return;
+      console.log(`[AuthDebug] ${new Date().toISOString()} Handling session. User: ${session?.user?.id}`);
+
+      // Immediately set loading to true if we have a session to process
+      if (session?.user) {
+        setLoading(true);
+      }
+
+      let currentUser = session?.user ?? null;
+      if (currentUser) {
+        const role = await fetchUserRole(currentUser.id);
+        if (mounted && role) {
+          currentUser = { ...currentUser, role };
+        }
+      }
+
+      if (mounted) {
+        setSession(session);
+        setUser(currentUser as User);
+        setLoading(false);
+        console.log(`[AuthDebug] ${new Date().toISOString()} State updated. Loading: false`);
+      }
     };
 
     const initSession = async () => {
-        try {
-            const { data: { session } } = await supabase.auth.getSession();
-            setSession(session);
-            let currentUser = session?.user ?? null;
-            if (currentUser) {
-                const role = await fetchUserRole(currentUser.id);
-                if (role) currentUser = { ...currentUser, role };
-            }
-            setUser(currentUser as User);
-        } catch (error) {
-            console.error('Error initializing session:', error);
-        } finally {
-            setLoading(false);
+      console.log(`[AuthDebug] ${new Date().toISOString()} initSession started`);
+      try {
+        // Create a promise that rejects after 2 seconds
+        const timeoutPromise = new Promise<{ data: { session: Session | null }; error: any }>((_, reject) =>
+          setTimeout(() => reject(new Error('Session fetch timeout')), 2000)
+        );
+
+        // Race the getSession against the timeout
+        const { data: { session } } = await Promise.race([
+          supabase.auth.getSession(),
+          timeoutPromise
+        ]);
+
+        console.log(`[AuthDebug] ${new Date().toISOString()} getSession result exists:`, !!session);
+        await handleSession(session);
+      } catch (error) {
+        console.error(`[AuthDebug] ${new Date().toISOString()} Error initializing session (or timeout):`, error);
+
+        // Auto-cleanup functionality to fix the "hanging" issue
+        if (error instanceof Error && error.message === 'Session fetch timeout') {
+          console.warn(`[AuthDebug] ${new Date().toISOString()} Timeout detected. Clearing potential stale Supabase storage to self-heal.`);
+          try {
+            Object.keys(localStorage).forEach(key => {
+              if (key.startsWith('sb-')) {
+                localStorage.removeItem(key);
+                console.log(`[AuthDebug] Removed stale key: ${key}`);
+              }
+            });
+          } catch (cleanupError) {
+            console.error('[AuthDebug] Error clearing local storage:', cleanupError);
+          }
         }
+
+        // If timeout or error, we still want to stop loading eventually
+        if (mounted) setLoading(false);
+      }
     };
 
     initSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      try {
-          setSession(session);
-          let currentUser = session?.user ?? null;
-          if (currentUser) {
-             const role = await fetchUserRole(currentUser.id);
-             if (role) currentUser = { ...currentUser, role };
-          }
-          setUser(currentUser as User);
-      } catch (e) {
-         console.error('Error in auth state change:', e);
-      } finally {
-          setLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log(`[AuthDebug] ${new Date().toISOString()} onAuthStateChange event: ${event}`);
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
+        handleSession(session);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signInWithOtp = async (email: string) => {
