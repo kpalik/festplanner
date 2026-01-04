@@ -1,0 +1,269 @@
+import React, { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { Plus, Search, Music, Globe, Loader2, X, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+interface Band {
+  id: string;
+  name: string;
+  bio: string | null;
+  origin_country: string | null;
+  image_url: string | null;
+  website_url: string | null;
+  spotify_url: string | null;
+  apple_music_url: string | null;
+}
+
+export default function Bands() {
+  const [bands, setBands] = useState<Band[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState('');
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+  useEffect(() => {
+    fetchBands();
+  }, []);
+
+  const fetchBands = async () => {
+    try {
+      const { data, error } = await supabase.from('bands').select('*').order('name');
+      if (error) throw error;
+      setBands(data || []);
+    } catch (error) {
+      console.error('Error fetching bands:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredBands = bands.filter(band => 
+    band.name.toLowerCase().includes(search.toLowerCase()) || 
+    (band.origin_country && band.origin_country.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  return (
+    <div className="max-w-6xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+           <h1 className="text-3xl font-bold text-white mb-2">Bands & Artists</h1>
+           <p className="text-slate-400">Manage the lineup database.</p>
+        </div>
+        <div className="flex items-center gap-3">
+            <div className="relative">
+                <Search className="w-5 h-5 text-slate-500 absolute left-3 top-2.5" />
+                <input 
+                    type="text" 
+                    placeholder="Search bands..." 
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-10 pr-4 py-2 bg-slate-900 border border-slate-700 rounded-lg text-white focus:ring-2 focus:ring-purple-500 outline-none w-full md:w-64"
+                />
+            </div>
+            <button
+                onClick={() => setIsCreateOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-purple-500/20 whitespace-nowrap"
+            >
+                <Plus className="w-5 h-5" />
+                Add Band
+            </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-8 h-8 text-purple-500 animate-spin" />
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {filteredBands.map((band) => (
+            <div key={band.id} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-purple-500/30 transition-all group">
+                <div className="h-48 bg-slate-800 relative overflow-hidden">
+                    {band.image_url ? (
+                        <img src={band.image_url} alt={band.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                            <Music className="w-12 h-12 text-slate-700" />
+                        </div>
+                    )}
+                </div>
+                <div className="p-4">
+                    <h3 className="font-bold text-white text-lg truncate">{band.name}</h3>
+                    <p className="text-sm text-slate-500 mb-3 flex items-center gap-1">
+                        <Globe className="w-3 h-3" />
+                        {band.origin_country || 'Unknown origin'}
+                    </p>
+                    <div className="flex gap-2">
+                        {band.spotify_url && <a href={band.spotify_url} target="_blank" rel="noreferrer" className="text-xs bg-[#1DB954]/10 text-[#1DB954] px-2 py-1 rounded hover:bg-[#1DB954]/20 transition">Spotify</a>}
+                        {band.website_url && <a href={band.website_url} target="_blank" rel="noreferrer" className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded hover:bg-slate-700 transition">Web</a>}
+                    </div>
+                </div>
+            </div>
+          ))}
+          {filteredBands.length === 0 && (
+             <div className="col-span-full py-12 text-center text-slate-500">
+                 No bands found matching your search.
+             </div>
+          )}
+        </div>
+      )}
+
+      <CreateBandModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} onCreated={fetchBands} />
+    </div>
+  );
+}
+
+function CreateBandModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onClose: () => void; onCreated: () => void }) {
+    const [formData, setFormData] = useState({
+        name: '',
+        bio: '',
+        origin_country: '',
+        image_url: '',
+        website_url: '',
+        spotify_url: '',
+        apple_music_url: ''
+    });
+    const [loading, setLoading] = useState(false);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+             const { error } = await supabase.from('bands').insert([formData] as any);
+             if (error) throw error;
+             
+             onCreated();
+             onClose();
+             setFormData({ name: '', bio: '', origin_country: '', image_url: '', website_url: '', spotify_url: '', apple_music_url: '' });
+        } catch (err: any) {
+            console.error(err);
+            alert(err.message);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+                        onClick={onClose}
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none p-4"
+                    >
+                        <div className="bg-slate-900 border border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl pointer-events-auto flex flex-col max-h-[90vh]">
+                            <div className="flex items-center justify-between p-6 border-b border-slate-800">
+                                <h2 className="text-xl font-bold text-white">Add New Band</h2>
+                                <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            
+                            <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Band Name</label>
+                                        <input 
+                                            type="text" 
+                                            required
+                                            className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                                            value={formData.name}
+                                            onChange={e => setFormData({...formData, name: e.target.value})}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Origin Country</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                                            value={formData.origin_country}
+                                            onChange={e => setFormData({...formData, origin_country: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">Image URL</label>
+                                    <input 
+                                        type="url" 
+                                        className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                                        value={formData.image_url}
+                                        onChange={e => setFormData({...formData, image_url: e.target.value})}
+                                        placeholder="https://"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">Bio</label>
+                                    <textarea 
+                                        rows={3}
+                                        className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-purple-500 outline-none resize-none"
+                                        value={formData.bio}
+                                        onChange={e => setFormData({...formData, bio: e.target.value})}
+                                    />
+                                </div>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Website</label>
+                                        <input 
+                                            type="url" 
+                                            className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                                            value={formData.website_url}
+                                            onChange={e => setFormData({...formData, website_url: e.target.value})}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Spotify URL</label>
+                                        <input 
+                                            type="url" 
+                                            className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                                            value={formData.spotify_url}
+                                            onChange={e => setFormData({...formData, spotify_url: e.target.value})}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-slate-300 mb-1">Apple Music</label>
+                                        <input 
+                                            type="url" 
+                                            className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                                            value={formData.apple_music_url}
+                                            onChange={e => setFormData({...formData, apple_music_url: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="pt-4 flex justify-end gap-3">
+                                    <button 
+                                        type="button" 
+                                        onClick={onClose}
+                                        className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button 
+                                        type="submit" 
+                                        disabled={loading}
+                                        className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg font-medium transition flex items-center gap-2"
+                                    >
+                                        {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                                        Save Band
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
+    );
+}

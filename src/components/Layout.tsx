@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Calendar, Users, Tent } from 'lucide-react';
+import { LogOut, Calendar, Users, Tent, Music } from 'lucide-react';
 import clsx from 'clsx';
 
 export default function Layout() {
@@ -37,6 +37,7 @@ export default function Layout() {
             <NavItem to="/" icon={<Calendar />} label="Dashboard" active />
             <div className="pt-4 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Discover</div>
             <NavItem to="/festivals" icon={<Tent />} label="Festivals" />
+            <NavItem to="/bands" icon={<Music />} label="Bands" />
             <NavItem to="/trips" icon={<Users />} label="My Trips" />
             {/* Admin Links would go here based on role */}
         </nav>

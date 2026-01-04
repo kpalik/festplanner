@@ -134,11 +134,11 @@ function CreateFestivalModal({ isOpen, onClose, onCreated }: { isOpen: boolean; 
              // 1. Get current user profile to link (assuming trigger created profile)
              // However, strictly referencing profiles(id) might require ensuring the profile exists.
              
-             const { error } = await supabase.from('festivals').insert({
+             const { error } = await supabase.from('festivals').insert([{
                  ...formData,
                  is_public: false, // Draft by default
                  created_by: user?.id 
-             });
+             }] as any);
 
              if (error) throw error;
              
