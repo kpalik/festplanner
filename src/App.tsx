@@ -8,6 +8,7 @@ import Festivals from './pages/Festivals';
 import FestivalDetails from './pages/FestivalDetails';
 import Bands from './pages/Bands';
 import Trips from './pages/Trips';
+import TripDetails from './pages/TripDetails';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
                 <Route path="/festivals/:id" element={<FestivalDetails />} />
                 <Route path="/bands" element={<Bands />} />
                 <Route path="/trips" element={<Trips />} />
+                <Route path="/trips/:id" element={<TripDetails />} />
               </Route>
             </Route>
           </Routes>

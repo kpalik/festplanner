@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Users, Calendar, MapPin, Loader2, X, Tent } from 'lucide-react';
+import { Plus, Users, Calendar, Loader2, X, Tent } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+
 
 interface Trip {
   id: string;
@@ -28,7 +28,6 @@ export default function Trips() {
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (user) {
@@ -68,10 +67,10 @@ export default function Trips() {
            <h1 className="text-3xl font-bold text-white mb-2">My Trips</h1>
            <p className="text-slate-400">Manage your festival plans with friends.</p>
         </div>
-        <button
-            onClick={() => setIsCreateOpen(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20"
-        >
+      <button
+        onClick={() => setIsCreateOpen(true)}
+        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20"
+      >
             <Plus className="w-5 h-5" />
             Create Trip
         </button>
@@ -173,14 +172,18 @@ function CreateTripModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onCl
 
         try {
              // 1. Create Trip
-             const { data: tripData, error: tripError } = await supabase.from('trips').insert([{
+             const { data, error: tripError } = await supabase.from('trips').insert([{
                  name: formData.name,
                  description: formData.description,
                  festival_id: formData.festival_id || null,
                  created_by: user.id
              }] as any).select().single();
 
-             if (tripError) throw tripError;
+             if (tripError || !data) throw tripError || new Error("Failed to create trip");
+             
+             const tripData = data as Trip; // Safe cast since we know the schema
+
+             // 2. Add Creator as Member (Admin)
 
              // 2. Add Creator as Member (Admin)
              const { error: memberError } = await supabase.from('trip_members').insert([{
