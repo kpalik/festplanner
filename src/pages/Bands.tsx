@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Plus, Search, Music, Globe, Loader2, X, AlertCircle } from 'lucide-react';
+import { Plus, Search, Music, Globe, Loader2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Band {

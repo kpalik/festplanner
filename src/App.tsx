@@ -5,7 +5,9 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Festivals from './pages/Festivals';
+import FestivalDetails from './pages/FestivalDetails';
 import Bands from './pages/Bands';
+import Trips from './pages/Trips';
 
 function App() {
   return (
@@ -19,7 +21,9 @@ function App() {
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/festivals" element={<Festivals />} />
+                <Route path="/festivals/:id" element={<FestivalDetails />} />
                 <Route path="/bands" element={<Bands />} />
+                <Route path="/trips" element={<Trips />} />
               </Route>
             </Route>
           </Routes>

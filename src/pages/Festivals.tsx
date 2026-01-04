@@ -15,11 +15,14 @@ interface Festival {
   is_public: boolean;
 }
 
+import { useNavigate } from 'react-router-dom';
+
 export default function Festivals() {
   const [festivals, setFestivals] = useState<Festival[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { } = useAuth();
+  const navigate = useNavigate();
   // TODO: Add proper Role check
   const isAdmin = true; // Temporary for development
 
@@ -68,7 +71,11 @@ export default function Festivals() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {festivals.map((festival) => (
-            <div key={festival.id} className="group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-purple-500/30 transition-all duration-300">
+            <div 
+                key={festival.id} 
+                onClick={() => navigate(`/festivals/${festival.id}`)}
+                className="cursor-pointer group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-purple-500/30 transition-all duration-300"
+            >
               <div className="h-48 bg-slate-800 relative overflow-hidden">
                 {festival.image_url ? (
                   <img src={festival.image_url} alt={festival.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
