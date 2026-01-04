@@ -33,7 +33,7 @@ export function EditBandModal({ isOpen, onClose, band, onUpdated }: { isOpen: bo
 
         try {
             // Use type assertion since Supabase types inference might improperly intersect with our manual types sometimes
-            const { error } = await supabase.from('bands').update(formData).eq('id', band.id);
+            const { error } = await (supabase as any).from('bands').update(formData).eq('id', band.id);
             if (error) throw error;
 
             onUpdated();

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ImageUpload } from '../components/ImageUpload';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Plus, Trash2, MapPin, Calendar, Tent, Loader2, Music, X, Edit, ThumbsUp, ThumbsDown, Heart } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, MapPin, Calendar, Tent, Loader2, Music, X, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface Festival {
@@ -40,7 +40,7 @@ export default function FestivalDetails() {
     const [festival, setFestival] = useState<Festival | null>(null);
     const [stages, setStages] = useState<Stage[]>([]);
     const [shows, setShows] = useState<Show[]>([]);
-    const [userInteractions, setUserInteractions] = useState<Record<string, 'like' | 'must_see' | 'meh'>>({});
+
     const [selectedDayLineup, setSelectedDayLineup] = useState<string>('all'); // 'all' | 'YYYY-MM-DD'
     const [loading, setLoading] = useState(true);
     const [newStageName, setNewStageName] = useState('');
@@ -90,51 +90,12 @@ export default function FestivalDetails() {
     useEffect(() => {
         if (id) {
             fetchFestivalData();
-            if (user) fetchInteractions();
         }
     }, [id, user]);
 
-    const fetchInteractions = async () => {
-        if (!user) return;
-        const { data } = await supabase
-            .from('show_interactions')
-            .select('show_id, interaction_type')
-            .eq('user_id', user.id);
 
-        if (data) {
-            const map: Record<string, any> = {};
-            data.forEach((i: any) => map[i.show_id] = i.interaction_type);
-            setUserInteractions(map);
-        }
-    };
 
-    const handleInteraction = async (showId: string, type: 'like' | 'must_see' | 'meh') => {
-        if (!user) return;
-        const current = userInteractions[showId];
 
-        try {
-            if (current === type) {
-                // Remove
-                const { error } = await supabase.from('show_interactions').delete().match({ user_id: user.id, show_id: showId });
-                if (error) throw error;
-                const newMap = { ...userInteractions };
-                delete newMap[showId];
-                setUserInteractions(newMap);
-            } else {
-                // Upsert
-                const { error } = await supabase.from('show_interactions').upsert({
-                    user_id: user.id,
-                    show_id: showId,
-                    interaction_type: type
-                } as any, { onConflict: 'user_id, show_id' });
-
-                if (error) throw error;
-                setUserInteractions(prev => ({ ...prev, [showId]: type }));
-            }
-        } catch (err) {
-            console.error('Error updating interaction:', err);
-        }
-    };
 
     const fetchFestivalData = async () => {
         try {

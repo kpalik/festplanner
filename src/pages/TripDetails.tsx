@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, MapPin, Music, Heart, ThumbsUp, ThumbsDown, Trophy, Crown, CheckCircle2, Clock, CircleHelp, Trash } from 'lucide-react';
+import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, CircleHelp, Trash } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -84,7 +84,7 @@ export default function TripDetails() {
     try {
       if (!trip) setLoading(true);
 
-      const { data: tripData, error: tripError } = await supabase
+      const { data: tripData, error: tripError } = await (supabase as any)
         .from('trips')
         .select(`
             *,
@@ -102,7 +102,7 @@ export default function TripDetails() {
       if (tripError) throw tripError;
       setTrip(tripData);
 
-      const { data: membersData, error: membersError } = await supabase
+      const { data: membersData, error: membersError } = await (supabase as any)
         .from('trip_members')
         .select(`
             id,
@@ -118,7 +118,7 @@ export default function TripDetails() {
 
       if (tripData.festival_id) {
         // Fetch Shows
-        const { data: showsData } = await supabase
+        const { data: showsData } = await (supabase as any)
           .from('shows')
           .select(`
                 *,
@@ -135,16 +135,16 @@ export default function TripDetails() {
 
         // Fetch Interactions for Members
         // Use user IDs from members list
-        const memberIds = membersData?.map(m => m.user_id).filter(Boolean) || [];
+        const memberIds = membersData?.map((m: any) => m.user_id).filter(Boolean) || [];
         if (memberIds.length > 0) {
-          const { data: interactionsData } = await supabase
+          const { data: interactionsData } = await (supabase as any)
             .from('show_interactions')
             .select('show_id, user_id, interaction_type')
             .in('user_id', memberIds);
 
           // Enrich with email for UI display
           const enriched = (interactionsData || []).map((i: any) => {
-            const member = membersData?.find(m => m.user_id === i.user_id);
+            const member = membersData?.find((m: any) => m.user_id === i.user_id);
             return { ...i, user_email: member?.profiles?.email || 'Unknown' };
           });
           setInteractions(enriched);
@@ -162,7 +162,7 @@ export default function TripDetails() {
     if (!trip) return;
     try {
       // 1. Check if profile exists
-      const { data: profile } = await supabase.from('profiles').select('id, email').eq('email', email).single();
+      const { data: profile } = await (supabase as any).from('profiles').select('id, email').eq('email', email).single();
 
       let insertPayload: any = {
         trip_id: trip.id,
@@ -177,7 +177,7 @@ export default function TripDetails() {
         insertPayload.invitation_email = email;
       }
 
-      const { error } = await supabase.from('trip_members').insert([insertPayload]);
+      const { error } = await (supabase as any).from('trip_members').insert([insertPayload]);
       if (error) {
         if (error.code === '23505') alert('User already invited or in trip.');
         else throw error;
@@ -392,7 +392,7 @@ export default function TripDetails() {
   );
 }
 
-function TripLineup({ shows, days, members, interactions, currentUserId, onInteractionUpdate }: any) {
+function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpdate }: any) {
   const [selectedDay, setSelectedDay] = useState('all');
 
   const handleVote = async (showId: string, type: 'like' | 'must_see' | 'meh' | 'none') => {
@@ -401,16 +401,16 @@ function TripLineup({ shows, days, members, interactions, currentUserId, onInter
     try {
       if (type === 'none') {
         // Explicitly remove vote
-        await supabase.from('show_interactions').delete().match({ user_id: currentUserId, show_id: showId });
+        await (supabase as any).from('show_interactions').delete().match({ user_id: currentUserId, show_id: showId });
       } else {
         const current = interactions.find((i: any) => i.show_id === showId && i.user_id === currentUserId)?.interaction_type;
 
         if (current === type) {
           // Toggle off -> remove (revert to question mark/none)
-          await supabase.from('show_interactions').delete().match({ user_id: currentUserId, show_id: showId });
+          await (supabase as any).from('show_interactions').delete().match({ user_id: currentUserId, show_id: showId });
         } else {
           // Upsert new vote
-          await supabase.from('show_interactions').upsert({
+          await (supabase as any).from('show_interactions').upsert({
             user_id: currentUserId,
             show_id: showId,
             interaction_type: type
@@ -457,7 +457,7 @@ function TripLineup({ shows, days, members, interactions, currentUserId, onInter
       <div className="space-y-4">
         {filteredShows.map((show: Show) => {
           const myVote = interactions.find((i: any) => i.show_id === show.id && i.user_id === currentUserId)?.interaction_type;
-          const othersVotes = interactions.filter((i: any) => i.show_id === show.id && i.user_id !== currentUserId);
+
 
           return (
             <div key={show.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-blue-500/30 transition group">

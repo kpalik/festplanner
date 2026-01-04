@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Tent, Calendar, Plus, Users, Loader2 } from 'lucide-react';
+import { Loader2, Tent } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface Trip {

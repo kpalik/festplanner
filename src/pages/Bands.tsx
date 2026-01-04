@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Search, Music, Globe, Loader2, X, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Music, Globe, Loader2, X, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageUpload } from '../components/ImageUpload';
 import { EditBandModal, type Band } from '../components/EditBandModal';
