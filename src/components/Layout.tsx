@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Calendar, Users, Tent, Music } from 'lucide-react';
+import PwaInstaller from './PwaInstaller';
 import clsx from 'clsx';
 
 export default function Layout() {
@@ -70,6 +71,7 @@ export default function Layout() {
       {/* Main Content */}
       <main className="flex-1 overflow-auto bg-slate-950 p-4 pb-24 md:p-8 md:pb-8">
         <Outlet />
+        <PwaInstaller />
       </main>
 
       {/* Mobile Bottom Nav */}
