@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, CircleHelp, Trash } from 'lucide-react';
+import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, Trash } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -52,7 +52,7 @@ interface Show {
 interface Interaction {
   show_id: string;
   user_id: string;
-  interaction_type: 'like' | 'must_see' | 'meh';
+  interaction_type: number;
   user_email?: string;
 }
 
@@ -397,27 +397,22 @@ export default function TripDetails() {
 function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpdate }: any) {
   const [selectedDay, setSelectedDay] = useState('all');
 
-  const handleVote = async (showId: string, type: 'like' | 'must_see' | 'meh' | 'none') => {
+  const handleVote = async (showId: string, rating: number) => {
     if (!currentUserId) return;
 
     try {
-      if (type === 'none') {
-        // Explicitly remove vote
+      const current = interactions.find((i: any) => i.show_id === showId && i.user_id === currentUserId)?.interaction_type;
+
+      if (current === rating) {
+        // Toggle off
         await (supabase as any).from('show_interactions').delete().match({ user_id: currentUserId, show_id: showId });
       } else {
-        const current = interactions.find((i: any) => i.show_id === showId && i.user_id === currentUserId)?.interaction_type;
-
-        if (current === type) {
-          // Toggle off -> remove (revert to question mark/none)
-          await (supabase as any).from('show_interactions').delete().match({ user_id: currentUserId, show_id: showId });
-        } else {
-          // Upsert new vote
-          await (supabase as any).from('show_interactions').upsert({
-            user_id: currentUserId,
-            show_id: showId,
-            interaction_type: type
-          }, { onConflict: 'user_id, show_id' });
-        }
+        // Upsert new vote
+        await (supabase as any).from('show_interactions').upsert({
+          user_id: currentUserId,
+          show_id: showId,
+          interaction_type: rating
+        }, { onConflict: 'user_id, show_id' });
       }
       onInteractionUpdate();
     } catch (e) {
@@ -490,11 +485,8 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
                     <h4 className="text-lg font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">
                       {show.bands.name}
                     </h4>
-                    <div className="flex items-center gap-2 bg-slate-950/50 p-1.5 rounded-full border border-slate-800/50 self-start md:self-auto">
-                      <VoteButton type="meh" active={myVote === 'meh'} onClick={() => handleVote(show.id, 'meh')} />
-                      <VoteButton type="question" active={!myVote} onClick={() => handleVote(show.id, 'none')} />
-                      <VoteButton type="like" active={myVote === 'like'} onClick={() => handleVote(show.id, 'like')} />
-                      <VoteButton type="must_see" active={myVote === 'must_see'} onClick={() => handleVote(show.id, 'must_see')} />
+                    <div className="flex-1 w-full mt-2 md:mt-0 md:max-w-md">
+                      <RatingControl myVote={myVote} onVote={(val: number) => handleVote(show.id, val)} />
                     </div>
                   </div>
 
@@ -509,24 +501,45 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
   )
 }
 
-function VoteButton({ type, active, onClick }: any) {
-  const config: any = {
-    like: { icon: ThumbsUp, color: 'text-green-500', bg: 'bg-green-500/20' },
-    must_see: { icon: Heart, color: 'text-pink-500', bg: 'bg-pink-500/20' },
-    meh: { icon: ThumbsDown, color: 'text-orange-500', bg: 'bg-orange-500/20' },
-    question: { icon: CircleHelp, color: 'text-slate-400', bg: 'bg-slate-800' }
-  };
-  const C = config[type];
-  const Icon = C.icon;
-
+function RatingControl({ myVote, onVote }: { myVote?: number, onVote: (val: number) => void }) {
   return (
-    <button
-      onClick={onClick}
-      className={clsx("p-2 rounded-full transition", active ? `${C.color} ${C.bg}` : "text-slate-600 hover:bg-slate-800 hover:text-slate-300")}
-      title={type.replace('_', ' ')}
-    >
-      <Icon className={clsx("w-5 h-5", active && type === 'must_see' && "fill-current")} />
-    </button>
+    <div className="flex flex-wrap items-center w-full bg-slate-950/50 rounded-xl border border-slate-800/50 overflow-hidden">
+      {[...Array(10)].map((_, i) => {
+        const val = i + 1;
+        const isActive = myVote === val;
+
+        // Icons for specific values
+        let Content: React.ReactNode = <span className="text-sm font-medium font-mono">{val}</span>;
+        if (val === 1) Content = <ThumbsDown className={clsx("w-4 h-4", isActive && "fill-current")} />;
+        if (val === 6) Content = <ThumbsUp className={clsx("w-4 h-4", isActive && "fill-current")} />;
+        if (val === 10) Content = <Heart className={clsx("w-4 h-4", isActive && "fill-current")} />;
+
+        // Colors
+        let activeClass = "bg-blue-600 text-white"; // default active
+        if (isActive) {
+          if (val === 1) activeClass = "bg-orange-600 text-white";
+          if (val === 6) activeClass = "bg-green-600 text-white";
+          if (val === 10) activeClass = "bg-pink-600 text-white";
+        }
+
+        return (
+          <button
+            key={val}
+            onClick={() => onVote(val)}
+            className={clsx(
+              "flex-shrink-0 h-9 flex items-center justify-center transition-all relative group",
+              "w-[10%]", // Each item takes 10% width
+              isActive ? activeClass : "text-slate-500 hover:bg-slate-800 hover:text-slate-200"
+            )}
+            title={`Rate ${val}/10`}
+          >
+            {Content}
+            {/* Divider lines provided by space-x or borders? Using simple borders might mess up width. */}
+            {i < 9 && <div className="absolute right-0 top-2 bottom-2 w-px bg-slate-800/50" />}
+          </button>
+        );
+      })}
+    </div>
   )
 }
 
@@ -534,10 +547,11 @@ function TripRanking({ shows, days, interactions }: any) {
   const [selectedDay, setSelectedDay] = useState('all');
 
   const scores = useMemo(() => {
-    const map = new Map<string, number>(); // show_id -> score
+    const map = new Map<string, number>(); // show_id -> total score
 
     interactions.forEach((i: any) => {
-      const val = i.interaction_type === 'must_see' ? 3 : i.interaction_type === 'like' ? 1 : -1;
+      // Simple sum of ratings
+      const val = i.interaction_type || 0;
       map.set(i.show_id, (map.get(i.show_id) || 0) + val);
     });
 
@@ -554,15 +568,14 @@ function TripRanking({ shows, days, interactions }: any) {
 
     // Map shows to [Show, Score, Details]
     const ranked = relevantShows.map((s: Show) => {
-      const showInteractions = interactions.filter((i: any) => i.show_id === s.id && i.interaction_type !== 'none');
+      const showInteractions = interactions.filter((i: any) => i.show_id === s.id && i.interaction_type > 0);
       return {
         show: s,
         score: map.get(s.id) || 0,
         details: showInteractions.map((i: any) => ({
           user: i.user_email ? i.user_email.split('@')[0] : 'Unknown',
-          type: i.interaction_type,
-          val: i.interaction_type === 'must_see' ? '+3' : i.interaction_type === 'like' ? '+1' : '-1'
-        }))
+          val: i.interaction_type
+        })).sort((a: any, b: any) => b.val - a.val)
       };
     }).sort((a: any, b: any) => b.score - a.score); // Descending score
 
@@ -611,14 +624,18 @@ function TripRanking({ shows, days, interactions }: any) {
             </div>
 
             <div className="text-right">
-              <div className="text-2xl font-black text-white">{item.score > 0 ? `+${item.score}` : item.score}</div>
+              <div className="text-2xl font-black text-white">{item.score > 0 ? item.score : 0}</div>
               <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-2">Points</div>
 
               <div className="flex flex-col items-end gap-1">
                 {item.details.map((d: any, i: number) => (
                   <div key={i} className="text-xs text-slate-400 flex items-center gap-1">
                     <span className="text-slate-500">{d.user}</span>
-                    <span className={clsx("font-bold", d.type === 'must_see' ? "text-pink-400" : d.type === 'like' ? "text-green-400" : "text-orange-400")}>
+                    <span className={clsx("font-bold",
+                      d.val === 10 ? "text-pink-400" :
+                        d.val >= 6 ? "text-green-400" :
+                          d.val === 1 ? "text-orange-400" : "text-blue-400"
+                    )}>
                       {d.val}
                     </span>
                   </div>
