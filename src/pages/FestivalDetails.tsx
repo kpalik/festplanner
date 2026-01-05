@@ -7,6 +7,7 @@ import { BandCombobox } from '../components/BandCombobox';
 import { supabase } from '../lib/supabase';
 import { ArrowLeft, Plus, Trash2, MapPin, Calendar, Tent, Loader2, Music, X, Edit, CircleHelp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import clsx from 'clsx';
 
 interface Festival {
     id: string;
@@ -36,6 +37,7 @@ interface Show {
     is_late_night?: boolean;
     date_tbd?: boolean;
     time_tbd?: boolean;
+    type: 'normal' | 'headliner';
 }
 
 export default function FestivalDetails() {
@@ -91,6 +93,11 @@ export default function FestivalDetails() {
                     shows: dayShows
                         .filter(s => s.stage_id === stage.id)
                         .sort((a, b) => {
+                            // Sort by type first (headliner first)
+                            if (a.type === 'headliner' && b.type !== 'headliner') return -1;
+                            if (a.type !== 'headliner' && b.type === 'headliner') return 1;
+
+                            // Then sort by time
                             if (!a.start_time || !b.start_time) return 0;
                             return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
                         })
@@ -483,9 +490,12 @@ export default function FestivalDetails() {
                                                         </div>
 
                                                         <div className="flex-1">
-                                                            <div className="flex items-center justify-between">
-                                                                <h5 className="font-bold text-white group-hover:text-purple-400 transition-colors">
+                                                            <div className="flex items-center gap-2">
+                                                                <h5 className={clsx("font-bold transition-colors flex items-center gap-2",
+                                                                    show.type === 'headliner' ? "text-yellow-400 text-lg" : "text-white group-hover:text-purple-400"
+                                                                )}>
                                                                     {show.bands?.name}
+                                                                    {show.type === 'headliner' && <span className="text-[10px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-1.5 rounded uppercase tracking-wider font-bold">Headliner</span>}
                                                                 </h5>
                                                             </div>
                                                             {!show.time_tbd && (
@@ -569,6 +579,7 @@ function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showToEdit }:
     const [endTime, setEndTime] = useState(''); // HH:mm
     const [duration, setDuration] = useState<number>(60); // minutes
     const [isLateNight, setIsLateNight] = useState(false);
+    const [showType, setShowType] = useState<'normal' | 'headliner'>('normal');
 
     const [loading, setLoading] = useState(false);
 
@@ -620,6 +631,7 @@ function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showToEdit }:
                 // End time calc handled by effect but we can set it explicitly if needed
 
                 setIsLateNight(!!showToEdit.is_late_night);
+                setShowType(showToEdit.type || 'normal');
 
             } else {
                 // Info: Defaults
@@ -627,6 +639,7 @@ function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showToEdit }:
                 setIsDateTbd(true);
                 setIsTimeTbd(true);
                 setIsLateNight(false);
+                setShowType('normal');
                 if (!startTime) setStartTime('18:00'); // Only set default if not editing
             }
         }
@@ -756,7 +769,8 @@ function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showToEdit }:
                 end_time: finalEndISO,
                 is_late_night: isLateNight,
                 date_tbd: isDateTbd,
-                time_tbd: isTimeTbd
+                time_tbd: isTimeTbd,
+                type: showType
             };
 
             if (showToEdit) {
@@ -775,6 +789,7 @@ function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showToEdit }:
             setDuration(60);
             setIsLateNight(false);
             setIsDateTbd(true);
+            setShowType('normal');
         } catch (error: any) {
             alert(error.message);
         } finally {
@@ -837,6 +852,41 @@ function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showToEdit }:
                                             onInvalid={e => (e.target as HTMLInputElement).setCustomValidity('Please select a band')}
                                             onInput={e => (e.target as HTMLInputElement).setCustomValidity('')}
                                         />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4 mt-4">
+                                        <div>
+                                            <div className="flex justify-between mb-1">
+                                                <label className="block text-sm font-medium text-slate-300">Show Type</label>
+                                            </div>
+                                            <div className="bg-slate-800 p-1 rounded-lg flex gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowType('normal')}
+                                                    className={clsx("flex-1 py-1.5 text-sm rounded-md transition", showType === 'normal' ? "bg-slate-600 text-white shadow" : "text-slate-400 hover:text-white")}
+                                                >
+                                                    Normal
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowType('headliner')}
+                                                    className={clsx("flex-1 py-1.5 text-sm rounded-md transition", showType === 'headliner' ? "bg-yellow-600 text-white shadow" : "text-slate-400 hover:text-white")}
+                                                >
+                                                    Headliner
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-1">Stage</label>
+                                            <select
+                                                className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-purple-500 outline-none"
+                                                value={stageId}
+                                                onChange={e => setStageId(e.target.value)}
+                                            >
+                                                {stages.map(stage => (
+                                                    <option key={stage.id} value={stage.id}>{stage.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-2 mt-4 mb-2 md:col-span-2">
                                         <input

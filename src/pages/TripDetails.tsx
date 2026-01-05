@@ -48,6 +48,7 @@ interface Show {
   is_late_night?: boolean;
   date_tbd?: boolean;
   time_tbd?: boolean;
+  type?: 'normal' | 'headliner';
 }
 
 interface Interaction {
@@ -432,9 +433,15 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
     if (s.is_late_night) d.setDate(d.getDate() - 1);
     return d.toISOString().split('T')[0] === selectedDay;
   }).sort((a: Show, b: Show) => {
-    // Sort TBD dates to the end?
+    // Sort by type (headliner first)
+    if (a.type === 'headliner' && b.type !== 'headliner') return -1;
+    if (a.type !== 'headliner' && b.type === 'headliner') return 1;
+
+    // Then TBD logic
     if (a.date_tbd && !b.date_tbd) return 1;
     if (!a.date_tbd && b.date_tbd) return -1;
+
+    // Then Time
     if (!a.start_time || !b.start_time) return 0;
     return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
   });
@@ -484,7 +491,10 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <h4 className="text-lg font-bold text-white truncate">{show.bands.name}</h4>
+                    <h4 className={clsx("text-lg font-bold truncate", show.type === 'headliner' ? "text-yellow-400" : "text-white")}>
+                      {show.bands.name}
+                    </h4>
+                    {show.type === 'headliner' && <span className="text-[10px] bg-yellow-500/20 text-yellow-500 border border-yellow-500/30 px-1.5 rounded uppercase tracking-wider font-bold">Headliner</span>}
                     {show.bands.spotify_url && (
                       <a
                         href={show.bands.spotify_url}
