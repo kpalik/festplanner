@@ -62,6 +62,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       let currentUser = session?.user ?? null;
       if (currentUser) {
+        try {
+          await supabase.rpc('link_user_invitations');
+        } catch (e) {
+          console.error('[AuthDebug] Error linking invitations:', e);
+        }
+
         const role = await fetchUserRole(currentUser.id);
         if (mounted && role) {
           currentUser = { ...currentUser, role };

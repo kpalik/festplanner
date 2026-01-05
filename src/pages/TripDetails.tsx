@@ -33,8 +33,8 @@ interface TripMember {
 
 interface Show {
   id: string;
-  start_time: string;
-  end_time: string;
+  start_time: string | null;
+  end_time: string | null;
   stage_id: string;
   bands: {
     id: string;
@@ -45,6 +45,8 @@ interface Show {
     name: string;
   };
   is_late_night?: boolean;
+  date_tbd?: boolean;
+  time_tbd?: boolean;
 }
 
 interface Interaction {
@@ -425,10 +427,21 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
 
   const filteredShows = shows.filter((s: Show) => {
     if (selectedDay === 'all') return true;
+
+    // If Date TBD, only show in 'all' (already covered) or maybe a specific 'TBD' filter if added.
+    // If we are filtering by a specific day, skip TBD dates.
+    if (s.date_tbd || !s.start_time) return false;
+
     const d = new Date(s.start_time);
     if (s.is_late_night) d.setDate(d.getDate() - 1);
     return d.toISOString().split('T')[0] === selectedDay;
-  }).sort((a: Show, b: Show) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime());
+  }).sort((a: Show, b: Show) => {
+    // Sort TBD dates to the end?
+    if (a.date_tbd && !b.date_tbd) return 1;
+    if (!a.date_tbd && b.date_tbd) return -1;
+    if (!a.start_time || !b.start_time) return 0;
+    return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+  });
 
   return (
     <div className="space-y-6">
@@ -464,9 +477,12 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
               <div className="flex gap-4">
                 <div className="text-center min-w-[3.5rem] pt-1">
                   <div className="font-bold text-white text-lg">
-                    {new Date(show.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    {show.time_tbd || !show.start_time
+                      ? <span className="text-slate-500 text-sm">TBD</span>
+                      : new Date(show.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    }
                   </div>
-                  <div className="text-xs text-slate-500 uppercase">{show.stage?.name}</div>
+                  <div className="text-xs text-slate-500 uppercase">{show.stage?.name || 'Stage TBD'}</div>
                 </div>
 
                 <div className="flex-1">
@@ -529,6 +545,7 @@ function TripRanking({ shows, days, interactions }: any) {
     let relevantShows = shows;
     if (selectedDay !== 'all') {
       relevantShows = shows.filter((s: Show) => {
+        if (s.date_tbd || !s.start_time) return false;
         const d = new Date(s.start_time);
         if (s.is_late_night) d.setDate(d.getDate() - 1);
         return d.toISOString().split('T')[0] === selectedDay;
@@ -589,7 +606,7 @@ function TripRanking({ shows, days, interactions }: any) {
             <div className="flex-1">
               <h4 className="font-bold text-white text-lg">{item.show.bands.name}</h4>
               <div className="text-xs text-slate-500">
-                {new Date(item.show.start_time).toLocaleTimeString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })} • {item.show.stage?.name}
+                {item.show.date_tbd ? 'Date TBD' : (item.show.start_time ? new Date(item.show.start_time).toLocaleTimeString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' }) : 'Time TBD')} • {item.show.stage?.name || 'Stage TBD'}
               </div>
             </div>
 
