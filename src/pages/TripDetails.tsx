@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, Trash } from 'lucide-react';
+import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, Trash, Music } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -40,6 +40,7 @@ interface Show {
     id: string;
     name: string;
     image_url: string | null;
+    spotify_url?: string | null;
   };
   stage?: {
     name: string;
@@ -124,7 +125,7 @@ export default function TripDetails() {
           .from('shows')
           .select(`
                 *,
-                bands (id, name, image_url),
+                bands (id, name, image_url, spotify_url),
                 stages (name)
             `)
           .eq('festival_id', tripData.festival_id);
@@ -468,9 +469,10 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
 
 
           return (
-            <div key={show.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-blue-500/30 transition group">
-              <div className="flex gap-4">
-                <div className="text-center min-w-[3.5rem] pt-1">
+            <div key={show.id} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-blue-500/30 transition group flex flex-col">
+              {/* Upper Section: Info */}
+              <div className="p-4 bg-slate-800/20 flex gap-4 items-center">
+                <div className="text-center min-w-[3.5rem] flex-shrink-0">
                   <div className="font-bold text-white text-lg">
                     {show.time_tbd || !show.start_time
                       ? <span className="text-slate-500 text-sm">TBD</span>
@@ -480,18 +482,28 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
                   <div className="text-xs text-slate-500 uppercase">{show.stage?.name || 'Stage TBD'}</div>
                 </div>
 
-                <div className="flex-1">
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-2 md:gap-0">
-                    <h4 className="text-lg font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">
-                      {show.bands.name}
-                    </h4>
-                    <div className="flex-1 w-full mt-2 md:mt-0 md:max-w-md">
-                      <RatingControl myVote={myVote} onVote={(val: number) => handleVote(show.id, val)} />
-                    </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-lg font-bold text-white truncate">{show.bands.name}</h4>
+                    {show.bands.spotify_url && (
+                      <a
+                        href={show.bands.spotify_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[#1DB954] hover:text-[#1ed760] transition-colors flex-shrink-0"
+                        title="Listen on Spotify"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Music className="w-5 h-5" />
+                      </a>
+                    )}
                   </div>
-
-
                 </div>
+              </div>
+
+              {/* Lower Section: Rating - Full Width */}
+              <div className="bg-slate-950/30 p-2 md:p-3 relative border-t border-slate-800/50">
+                <RatingControl myVote={myVote} onVote={(val: number) => handleVote(show.id, val)} />
               </div>
             </div>
           );
@@ -503,7 +515,7 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
 
 function RatingControl({ myVote, onVote }: { myVote?: number, onVote: (val: number) => void }) {
   return (
-    <div className="flex flex-wrap items-center w-full bg-slate-950/50 rounded-xl border border-slate-800/50 overflow-hidden">
+    <div className="flex flex-wrap items-center w-full rounded-xl overflow-hidden rating-container">
       {[...Array(10)].map((_, i) => {
         const val = i + 1;
         const isActive = myVote === val;
