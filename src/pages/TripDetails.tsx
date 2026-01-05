@@ -162,7 +162,7 @@ export default function TripDetails() {
     }
   };
 
-  const handleRemoveMember = async (memberId: string, memberUserId: string | null, memberEmail: string) => {
+  const handleRemoveMember = async (memberId: string, memberEmail: string) => {
     if (!trip || !isOrganizer) return;
     if (!confirm(`Are you sure you want to remove ${memberEmail} from this trip? Their votes will be hidden from the ranking.`)) return;
 
@@ -359,7 +359,7 @@ export default function TripDetails() {
                   </div>
                   {isOrganizer && member.user_id !== user?.id && (
                     <button
-                      onClick={() => handleRemoveMember(member.id, member.user_id, member.profiles?.email || member.invitation_email || 'User')}
+                      onClick={() => handleRemoveMember(member.id, member.profiles?.email || member.invitation_email || 'User')}
                       className="p-1.5 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded transition"
                       title="Remove Member"
                     >
