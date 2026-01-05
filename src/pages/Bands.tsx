@@ -6,6 +6,7 @@ import { Plus, Search, Music, Globe, Loader2, X, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageUpload } from '../components/ImageUpload';
 import { EditBandModal, type Band } from '../components/EditBandModal';
+import { BandImporter } from '../components/Bands/BandImporter';
 
 export default function Bands() {
     const navigate = useNavigate();
@@ -14,6 +15,7 @@ export default function Bands() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isImportOpen, setIsImportOpen] = useState(false);
     const [selectedBand, setSelectedBand] = useState<Band | null>(null);
 
     useEffect(() => {
@@ -56,13 +58,21 @@ export default function Bands() {
                         />
                     </div>
                     {isAdmin && (
-                        <button
-                            onClick={() => setIsCreateOpen(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-purple-500/20 whitespace-nowrap"
-                        >
-                            <Plus className="w-5 h-5" />
-                            Add Band
-                        </button>
+                        <>
+                            <button
+                                onClick={() => setIsImportOpen(true)}
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all font-medium whitespace-nowrap hidden sm:block"
+                            >
+                                Import JSON
+                            </button>
+                            <button
+                                onClick={() => setIsCreateOpen(true)}
+                                className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-purple-500/20 whitespace-nowrap"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Add Band
+                            </button>
+                        </>
                     )}
                 </div>
             </div>
@@ -118,6 +128,7 @@ export default function Bands() {
             )}
 
             <CreateBandModal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} onCreated={fetchBands} />
+            <BandImporter isOpen={isImportOpen} onClose={() => setIsImportOpen(false)} onSuccess={fetchBands} />
             {selectedBand && (
                 <EditBandModal
                     isOpen={!!selectedBand}
