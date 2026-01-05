@@ -698,13 +698,13 @@ function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showToEdit }:
     }
 
     const fetchBands = async () => {
-        const { data } = await supabase.from('bands').select('id, name').order('name');
+        const { data } = await (supabase as any).from('bands').select('id, name').order('name');
         setBands(data || []);
     };
 
     const handleCreateBand = async (name: string): Promise<string | null> => {
         try {
-            const { data, error } = await supabase.from('bands').insert([{ name }]).select().single();
+            const { data, error } = await (supabase as any).from('bands').insert([{ name }]).select().single();
             if (error) throw error;
             setBands(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
             return data.id;
@@ -760,10 +760,10 @@ function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showToEdit }:
             };
 
             if (showToEdit) {
-                const { error } = await supabase.from('shows').update(payload).eq('id', showToEdit.id);
+                const { error } = await (supabase as any).from('shows').update(payload).eq('id', showToEdit.id);
                 if (error) throw error;
             } else {
-                const { error } = await supabase.from('shows').insert([payload]);
+                const { error } = await (supabase as any).from('shows').insert([payload]);
                 if (error) throw error;
             }
 

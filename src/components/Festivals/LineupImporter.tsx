@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Upload, AlertCircle, Check, HelpCircle } from 'lucide-react';
+import { Loader2, Upload, AlertCircle, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ImportItem {
@@ -38,8 +38,7 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
     const [error, setError] = useState<string | null>(null);
     const [logs, setLogs] = useState<string[]>([]);
 
-    // Store stages for lookup
-    const [stages, setStages] = useState<{ id: string, name: string }[]>([]);
+
 
     const addLog = (msg: string) => setLogs(prev => [...prev, msg]);
 
@@ -54,17 +53,17 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
             const processed: ProcessedItem[] = [];
 
             // Fetch existing artists to check matches
-            const { data: existingBands } = await supabase.from('bands').select('id, name');
+            const { data: existingBands } = await (supabase as any).from('bands').select('id, name');
 
             // Fetch stages for this festival
-            const { data: festStages } = await supabase.from('stages').select('id, name').eq('festival_id', festivalId);
-            setStages(festStages || []);
-            const stageMap = new Map(festStages?.map(s => [s.name.toLowerCase(), s]));
+            const { data: festStages } = await (supabase as any).from('stages').select('id, name').eq('festival_id', festivalId);
+            // setStages(festStages || []); // Unused state
+            const stageMap = new Map<string, any>(festStages?.map((s: any) => [s.name.toLowerCase(), s]));
 
             for (const item of parsed) {
                 if (!item.artist_name) continue;
 
-                const existing = existingBands?.find(b => b.name.toLowerCase() === item.artist_name.toLowerCase());
+                const existing = existingBands?.find((b: any) => b.name.toLowerCase() === item.artist_name.toLowerCase());
 
                 let resolvedStage = null;
                 if (item.stage_name) {
@@ -124,7 +123,7 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
                     };
                 });
 
-                const { data: createdArtists, error: createError } = await supabase
+                const { data: createdArtists, error: createError } = await (supabase as any)
                     .from('bands')
                     .insert(payloads)
                     .select('id, name');
@@ -135,8 +134,8 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
 
             // 2. Refresh bands to get all IDs
             addLog('Resolving artist IDs...');
-            const { data: allBands } = await supabase.from('bands').select('id, name');
-            const bandMap = new Map(allBands?.map(b => [b.name.toLowerCase(), b.id]));
+            const { data: allBands } = await (supabase as any).from('bands').select('id, name');
+            const bandMap = new Map(allBands?.map((b: any) => [b.name.toLowerCase(), b.id]));
 
             // 2b. Create missing stages
             const newStages = items.filter(i => i.is_new_stage);
@@ -144,7 +143,7 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
 
             if (uniqueNewStages.length > 0) {
                 addLog(`Creating ${uniqueNewStages.length} new stages...`);
-                const { error: stageError } = await supabase.from('stages').insert(
+                const { error: stageError } = await (supabase as any).from('stages').insert(
                     uniqueNewStages.map(name => ({
                         name: name,
                         festival_id: festivalId
@@ -154,8 +153,8 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
             }
 
             // 3. Resolve Stages (Refresh to get IDs including new ones)
-            const { data: stages } = await supabase.from('stages').select('id, name').eq('festival_id', festivalId);
-            const stageMap = new Map(stages?.map(s => [s.name.toLowerCase(), s.id]));
+            const { data: refreshedStages } = await (supabase as any).from('stages').select('id, name').eq('festival_id', festivalId);
+            const stageMap = new Map(refreshedStages?.map((s: any) => [s.name.toLowerCase(), s.id]));
 
             // 4. Create Shows
             addLog(`Creating ${items.length} shows...`);
@@ -177,7 +176,7 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
 
                     if (item.start_time) {
                         // HH:MM
-                        const [h, m] = item.start_time.split(':').map(Number);
+                        const [h] = item.start_time.split(':').map(Number);
                         const d = new Date(`${dateStr}T${item.start_time}:00`);
 
                         // Detect late night (00:00 - 05:00)
@@ -226,7 +225,7 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
                 };
             }).filter(Boolean);
 
-            const { error: showsError } = await supabase.from('shows').insert(showPayloads);
+            const { error: showsError } = await (supabase as any).from('shows').insert(showPayloads);
             if (showsError) throw showsError;
 
             addLog('Success! All shows imported.');
