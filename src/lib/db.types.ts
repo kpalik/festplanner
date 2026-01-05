@@ -64,16 +64,31 @@ export interface Database {
           id: string
           name: string
           created_at: string
+          origin_country: string | null
+          website_url: string | null
+          spotify_url: string | null
+          apple_music_url: string | null
+          image_url: string | null
         }
         Insert: {
           id?: string
           name: string
           created_at?: string
+          origin_country?: string | null
+          website_url?: string | null
+          spotify_url?: string | null
+          apple_music_url?: string | null
+          image_url?: string | null
         }
         Update: {
           id?: string
           name?: string
           created_at?: string
+          origin_country?: string | null
+          website_url?: string | null
+          spotify_url?: string | null
+          apple_music_url?: string | null
+          image_url?: string | null
         }
       }
       stages: {

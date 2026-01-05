@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Search, Music, Globe, Loader2, X, Edit } from 'lucide-react';
+import { Plus, Search, Music, Globe, Loader2, X, Edit, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageUpload } from '../components/ImageUpload';
 import { EditBandModal, type Band } from '../components/EditBandModal';
@@ -29,6 +29,68 @@ export default function Bands() {
             setBands(data || []);
         } catch (error) {
             console.error('Error fetching bands:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    const fetchSpotifyData = async (band: Band) => {
+        if (!confirm(`Fetch Spotify data for ${band.name}? This will overwrite image and Spotify URL.`)) return;
+
+        const rapidKey = import.meta.env.VITE_RAPIDAPI_KEY;
+        const rapidHost = import.meta.env.VITE_RAPIDAPI_HOST;
+
+        if (!rapidKey || !rapidHost) {
+            alert('Missing RapidAPI credentials in .env');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const encodedName = encodeURIComponent(band.name);
+            const response = await fetch(`https://${rapidHost}/search/?q=${encodedName}&type=artists&offset=0&limit=1&numberOfTopResults=1`, {
+                method: 'GET',
+                headers: {
+                    'X-Rapidapi-Key': rapidKey,
+                    'X-Rapidapi-Host': rapidHost
+                }
+            });
+
+            if (!response.ok) throw new Error('RapidAPI request failed');
+
+            const data = await response.json();
+            const artistItem = data?.artists?.items?.[0]?.data;
+
+            if (!artistItem) {
+                alert('No artist found on Spotify for: ' + band.name);
+                return;
+            }
+
+            // Extract contents
+            const uri = artistItem.uri; // "spotify:artist:..."
+            const spotifyId = uri.split(':')[2];
+            const spotifyUrl = `https://open.spotify.com/artist/${spotifyId}`;
+
+            const images: any[] = artistItem.visuals?.avatarImage?.sources || [];
+            // Sort by width desc
+            images.sort((a: any, b: any) => b.width - a.width);
+            const imageUrl = images[0]?.url;
+
+            // Update Supabase
+            const updatePayload: any = { spotify_url: spotifyUrl };
+            if (imageUrl) updatePayload.image_url = imageUrl;
+
+            const { error } = await (supabase as any).from('bands').update(updatePayload).eq('id', band.id);
+            if (error) throw error;
+
+            alert('Successfully updated band data from Spotify!');
+            fetchBands(); // Refresh UI
+
+
+        } catch (error: any) {
+            console.error('Error fetching Spotify data:', error);
+            alert('Error: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -98,12 +160,22 @@ export default function Bands() {
                                     </div>
                                 )}
                                 {isAdmin && (
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setSelectedBand(band); }}
-                                        className="absolute top-2 right-2 p-1.5 bg-slate-900/60 backdrop-blur rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-600"
-                                    >
-                                        <Edit className="w-4 h-4" />
-                                    </button>
+                                    <>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setSelectedBand(band); }}
+                                            className="absolute top-2 right-2 p-1.5 bg-slate-900/60 backdrop-blur rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-600"
+                                            title="Edit Band"
+                                        >
+                                            <Edit className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); fetchSpotifyData(band); }}
+                                            className="absolute top-2 right-10 p-1.5 bg-slate-900/60 backdrop-blur rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-green-600"
+                                            title="Fetch Spotify Data"
+                                        >
+                                            <RefreshCw className="w-4 h-4" />
+                                        </button>
+                                    </>
                                 )}
                             </div>
                             <div className="p-4">
@@ -137,6 +209,7 @@ export default function Bands() {
                     onUpdated={fetchBands}
                 />
             )}
+
         </div>
     );
 }
