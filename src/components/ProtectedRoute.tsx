@@ -1,9 +1,10 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2 } from 'lucide-react';
 
 export default function ProtectedRoute() {
   const { user, loading } = useAuth();
+  const location = useLocation();
 
   console.log(`[ProtectedRoute] ${new Date().toISOString()} Check - Loading: ${loading}, User: ${!!user}`);
 
@@ -17,7 +18,11 @@ export default function ProtectedRoute() {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    const params = new URLSearchParams(location.search);
+    const isInvited = params.get('invited') === 'true';
+    let to = "/login";
+    if (isInvited) to += "?invited=true";
+    return <Navigate to={to} replace />;
   }
 
   return <Outlet />;

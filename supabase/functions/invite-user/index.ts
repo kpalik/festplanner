@@ -42,7 +42,7 @@ serve(async (req) => {
                 invited_by_trip_name: tripName
             },
             // Redirect back to the trip page after they set their password
-            redirectTo: `${req.headers.get('origin') ?? 'http://localhost:5173'}/trips/${tripId}`
+            redirectTo: `${req.headers.get('origin') ?? 'http://localhost:5173'}/trips/${tripId}?invited=true`
         })
 
         if (error) {

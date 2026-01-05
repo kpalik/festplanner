@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Loader2, ArrowRight, KeyRound } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function Login() {
   const [step, setStep] = useState<'email' | 'otp'>('email');
@@ -11,6 +11,8 @@ export default function Login() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const { signInWithOtp, verifyOtp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isInvited = searchParams.get('invited') === 'true';
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,18 +55,22 @@ export default function Login() {
       <div className="w-full max-w-md relative group">
         {/* Glow Effect */}
         <div className="absolute -inset-1 bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-        
+
         <div className="relative bg-slate-900 ring-1 ring-slate-800 p-8 rounded-2xl shadow-xl">
           <div className="flex flex-col items-center mb-8">
             <div className="mb-6">
               <img src="/logo.png" alt="FestPlaner Logo" className="w-24 h-24 rounded-2xl shadow-lg shadow-purple-500/20" />
             </div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              {step === 'email' ? 'Welcome Back' : 'Enter Code'}
+            <h1 className="text-3xl font-bold text-white mb-2 text-center">
+              {step === 'email'
+                ? (isInvited ? 'Welcome to FestPlanner!' : 'Welcome to FestPlanner!!!')
+                : 'Enter Code'}
             </h1>
             <p className="text-slate-400 text-center">
-              {step === 'email' 
-                ? 'Enter your email to receive a login code' 
+              {step === 'email'
+                ? (isInvited
+                  ? "You've been invited to a festival! Register or log in to cast your votes for shows!"
+                  : 'Enter your email to receive a login code')
                 : `We sent a code to ${email}`}
             </p>
           </div>
@@ -131,7 +137,7 @@ export default function Login() {
               )}
 
               <div className="flex gap-3">
-                 <button
+                <button
                   type="button"
                   onClick={() => setStep('email')}
                   className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"

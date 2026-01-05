@@ -162,6 +162,24 @@ export default function TripDetails() {
     }
   };
 
+  const handleRemoveMember = async (memberId: string, memberUserId: string | null, memberEmail: string) => {
+    if (!trip || !isOrganizer) return;
+    if (!confirm(`Are you sure you want to remove ${memberEmail} from this trip? Their votes will be hidden from the ranking.`)) return;
+
+    try {
+      const { error } = await supabase.from('trip_members').delete().eq('id', memberId);
+      if (error) throw error;
+
+      // Optionally, we could also delete their interactions for this trip's shows to clean up DB, 
+      // but just removing them from the member list automatically excludes them from the ranking calculation in this UI.
+
+      fetchTripData();
+    } catch (e: any) {
+      console.error('Error removing member:', e);
+      alert('Error removing member: ' + e.message);
+    }
+  };
+
   const handleInvite = async (email: string) => {
     if (!trip) return;
     try {
@@ -189,9 +207,6 @@ export default function TripDetails() {
         // 2. If new user, try to send invite email via Edge Function
         if (!profile) {
           try {
-            // Determine base URL for redirect
-            // In dev: localhost, in prod: window.location.origin
-            // We don't necessarily need to pass it if Edge Function handles it, but good practice.
             await supabase.functions.invoke('invite-user', {
               body: {
                 email,
@@ -333,7 +348,7 @@ export default function TripDetails() {
                   <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-400">
                     {(member.profiles?.email || member.invitation_email || '?').charAt(0).toUpperCase()}
                   </div>
-                  <div className="overflow-hidden">
+                  <div className="overflow-hidden flex-1">
                     <div className="text-sm text-slate-200 truncate">
                       {member.profiles?.email || member.invitation_email}
                     </div>
@@ -342,6 +357,15 @@ export default function TripDetails() {
                       {!member.user_id && <span className="text-[10px] bg-orange-500/20 text-orange-400 px-1 rounded">Pending</span>}
                     </div>
                   </div>
+                  {isOrganizer && member.user_id !== user?.id && (
+                    <button
+                      onClick={() => handleRemoveMember(member.id, member.user_id, member.profiles?.email || member.invitation_email || 'User')}
+                      className="p-1.5 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded transition"
+                      title="Remove Member"
+                    >
+                      <Trash className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
