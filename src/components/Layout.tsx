@@ -26,7 +26,7 @@ export default function Layout() {
       <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
         <div className="flex items-center gap-2">
           <img src="/logo.png" className="w-8 h-8 rounded-lg" alt="Logo" />
-          <span className="font-bold text-lg bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">FestPlaner</span>
+          <span className="font-bold text-lg bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">FestPlanner</span>
         </div>
         <button onClick={handleSignOut} className="p-2 text-slate-400 hover:text-white">
           <LogOut className="w-5 h-5" />
@@ -37,7 +37,7 @@ export default function Layout() {
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 p-6">
         <div className="flex items-center gap-3 mb-10">
           <img src="/logo.png" className="w-10 h-10 rounded-xl" alt="Logo" />
-          <span className="font-bold text-xl bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">FestPlaner</span>
+          <span className="font-bold text-xl bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">FestPlanner</span>
         </div>
 
         <nav className="flex-1 space-y-2">

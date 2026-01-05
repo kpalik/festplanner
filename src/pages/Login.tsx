@@ -59,7 +59,7 @@ export default function Login() {
         <div className="relative bg-slate-900 ring-1 ring-slate-800 p-8 rounded-2xl shadow-xl">
           <div className="flex flex-col items-center mb-8">
             <div className="mb-6">
-              <img src="/logo.png" alt="FestPlaner Logo" className="w-24 h-24 rounded-2xl shadow-lg shadow-purple-500/20" />
+              <img src="/logo.png" alt="FestPlanner Logo" className="w-24 h-24 rounded-2xl shadow-lg shadow-purple-500/20" />
             </div>
             <h1 className="text-3xl font-bold text-white mb-2 text-center">
               {step === 'email'

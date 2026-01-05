@@ -36,7 +36,7 @@ export default function Bands() {
 
 
     const fetchSpotifyData = async (band: Band) => {
-        if (!confirm(`Fetch Spotify data for ${band.name}? This will overwrite image and Spotify URL.`)) return;
+        //if (!confirm(`Fetch Spotify data for ${band.name}? This will overwrite image and Spotify URL.`)) return;
 
         const rapidKey = import.meta.env.VITE_RAPIDAPI_KEY;
         const rapidHost = import.meta.env.VITE_RAPIDAPI_HOST;
@@ -49,7 +49,11 @@ export default function Bands() {
         try {
             setLoading(true);
             const encodedName = encodeURIComponent(band.name);
-            const response = await fetch(`https://${rapidHost}/search/?q=${encodedName}&type=artists&offset=0&limit=1&numberOfTopResults=1`, {
+            const url = `https://${rapidHost}/search/?q=${encodedName}&type=artists&offset=0&limit=1&numberOfTopResults=1`;
+
+            console.log('[Spotify Sync] Requesting:', url, { headers: { 'X-Rapidapi-Key': 'HIDDEN', 'X-Rapidapi-Host': rapidHost } });
+
+            const response = await fetch(url, {
                 method: 'GET',
                 headers: {
                     'X-Rapidapi-Key': rapidKey,
@@ -57,7 +61,13 @@ export default function Bands() {
                 }
             });
 
-            if (!response.ok) throw new Error('RapidAPI request failed');
+            console.log('[Spotify Sync] Status:', response.status, response.statusText);
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('[Spotify Sync] Error response:', errorText);
+                throw new Error(`RapidAPI request failed: ${response.status} ${response.statusText} - ${errorText}`);
+            }
 
             const data = await response.json();
             const artistItem = data?.artists?.items?.[0]?.data;
@@ -84,7 +94,7 @@ export default function Bands() {
             const { error } = await (supabase as any).from('bands').update(updatePayload).eq('id', band.id);
             if (error) throw error;
 
-            alert('Successfully updated band data from Spotify!');
+            //alert('Successfully updated band data from Spotify!');
             fetchBands(); // Refresh UI
 
 
@@ -94,6 +104,71 @@ export default function Bands() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const fetchMissingSpotifyData = async () => {
+        const missingDataBands = bands.filter(b => !b.image_url || !b.spotify_url);
+
+        if (missingDataBands.length === 0) {
+            alert("All bands already have image and Spotify URL!");
+            return;
+        }
+
+        if (!confirm(`Found ${missingDataBands.length} bands with missing data. Fetch from Spotify? This might take a while.`)) return;
+
+        const rapidKey = import.meta.env.VITE_RAPIDAPI_KEY;
+        const rapidHost = import.meta.env.VITE_RAPIDAPI_HOST;
+
+        if (!rapidKey || !rapidHost) {
+            alert('Missing RapidAPI credentials in .env');
+            return;
+        }
+
+        setLoading(true);
+        let updatedCount = 0;
+        let errors = 0;
+
+        for (const band of missingDataBands) {
+            try {
+                const encodedName = encodeURIComponent(band.name);
+                const url = `https://${rapidHost}/search/?q=${encodedName}&type=artists&offset=0&limit=1&numberOfTopResults=1`;
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: { 'X-Rapidapi-Key': rapidKey, 'X-Rapidapi-Host': rapidHost }
+                });
+
+                if (!response.ok) throw new Error('RapidAPI failed');
+
+                const data = await response.json();
+                const artistItem = data?.artists?.items?.[0]?.data;
+
+                if (artistItem) {
+                    const uri = artistItem.uri;
+                    const spotifyId = uri.split(':')[2];
+                    const spotifyUrl = `https://open.spotify.com/artist/${spotifyId}`;
+
+                    const images: any[] = artistItem.visuals?.avatarImage?.sources || [];
+                    images.sort((a: any, b: any) => b.width - a.width);
+                    const imageUrl = images[0]?.url;
+
+                    const updatePayload: any = { spotify_url: spotifyUrl };
+                    if (imageUrl) updatePayload.image_url = imageUrl;
+
+                    const { error } = await (supabase as any).from('bands').update(updatePayload).eq('id', band.id);
+                    if (!error) updatedCount++;
+                }
+            } catch (error) {
+                console.error(`Error fetching for ${band.name}:`, error);
+                errors++;
+            }
+            // Small delay to be nice to API
+            await new Promise(r => setTimeout(r, 600));
+        }
+
+        setLoading(false);
+        fetchBands();
+        alert(`Bulk sync finished.\nUpdated: ${updatedCount}\nErrors/Not Found: ${errors}`);
     };
 
     const filteredBands = bands.filter(band =>
@@ -126,6 +201,14 @@ export default function Bands() {
                                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all font-medium whitespace-nowrap hidden sm:block"
                             >
                                 Import JSON
+                            </button>
+                            <button
+                                onClick={fetchMissingSpotifyData}
+                                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition-all font-medium whitespace-nowrap hidden sm:flex items-center gap-2"
+                                title="Fetch data for bands without image/spotify url"
+                            >
+                                <RefreshCw className="w-4 h-4" />
+                                Bulk Sync
                             </button>
                             <button
                                 onClick={() => setIsCreateOpen(true)}
