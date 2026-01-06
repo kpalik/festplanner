@@ -2,10 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Search, Music, Globe, Loader2, X, Edit, RefreshCw } from 'lucide-react';
+import { Plus, Search, Loader2, X, Edit, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageUpload } from '../components/ImageUpload';
 import { EditBandModal, type Band } from '../components/EditBandModal';
+import { BandCard } from '../components/BandCard';
 import { BandImporter } from '../components/Bands/BandImporter';
 
 export default function Bands() {
@@ -228,51 +229,41 @@ export default function Bands() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+
+
                     {filteredBands.map((band) => (
-                        <div
+                        <BandCard
                             key={band.id}
-                            onClick={() => navigate(`/bands/${band.id}`)}
-                            className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-purple-500/30 transition-all group cursor-pointer"
-                        >
-                            <div className="h-48 bg-slate-800 relative overflow-hidden">
-                                {band.image_url ? (
-                                    <img src={band.image_url} alt={band.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center bg-slate-800">
-                                        <Music className="w-12 h-12 text-slate-700" />
+                            band={band}
+                            imageHeight="h-48"
+                            onCardClick={() => navigate(`/bands/${band.id}`)}
+                            topRightActions={isAdmin && (
+                                <>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); fetchSpotifyData(band); }}
+                                        className="p-1.5 bg-black/40 hover:bg-black/60 backdrop-blur rounded-full text-green-400 hover:text-green-300 transition-all border border-white/10"
+                                        title="Fetch Spotify Data"
+                                    >
+                                        <RefreshCw className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setSelectedBand(band); }}
+                                        className="p-1.5 bg-black/40 hover:bg-black/60 backdrop-blur rounded-full text-white transition-all border border-white/10"
+                                        title="Edit Band"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                    </button>
+                                </>
+                            )}
+                            footer={
+                                (band.spotify_url || band.website_url) && (
+                                    <div className="flex gap-2 text-xs">
+                                        {band.spotify_url && <a href={band.spotify_url} target="_blank" rel="noreferrer" className="bg-[#1DB954]/10 text-[#1DB954] px-2 py-1 rounded hover:bg-[#1DB954]/20 transition" onClick={e => e.stopPropagation()}>Spotify</a>}
+                                        {band.website_url && <a href={band.website_url} target="_blank" rel="noreferrer" className="bg-slate-800 text-slate-300 px-2 py-1 rounded hover:bg-slate-700 transition" onClick={e => e.stopPropagation()}>Web</a>}
                                     </div>
-                                )}
-                                {isAdmin && (
-                                    <>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setSelectedBand(band); }}
-                                            className="absolute top-2 right-2 p-1.5 bg-slate-900/60 backdrop-blur rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-600"
-                                            title="Edit Band"
-                                        >
-                                            <Edit className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); fetchSpotifyData(band); }}
-                                            className="absolute top-2 right-10 p-1.5 bg-slate-900/60 backdrop-blur rounded-full text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-green-600"
-                                            title="Fetch Spotify Data"
-                                        >
-                                            <RefreshCw className="w-4 h-4" />
-                                        </button>
-                                    </>
-                                )}
-                            </div>
-                            <div className="p-4">
-                                <h3 className="font-bold text-white text-lg truncate">{band.name}</h3>
-                                <p className="text-sm text-slate-500 mb-3 flex items-center gap-1">
-                                    <Globe className="w-3 h-3" />
-                                    {band.origin_country || 'Unknown origin'}
-                                </p>
-                                <div className="flex gap-2">
-                                    {band.spotify_url && <a href={band.spotify_url} target="_blank" rel="noreferrer" className="text-xs bg-[#1DB954]/10 text-[#1DB954] px-2 py-1 rounded hover:bg-[#1DB954]/20 transition">Spotify</a>}
-                                    {band.website_url && <a href={band.website_url} target="_blank" rel="noreferrer" className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded hover:bg-slate-700 transition">Web</a>}
-                                </div>
-                            </div>
-                        </div>
+                                )
+                            }
+                        />
                     ))}
                     {filteredBands.length === 0 && (
                         <div className="col-span-full py-12 text-center text-slate-500">

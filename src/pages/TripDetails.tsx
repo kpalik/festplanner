@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, Trash, Music } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { BandCard } from '../components/BandCard';
 
 interface Trip {
   id: string;
@@ -41,6 +42,10 @@ interface Show {
     name: string;
     image_url: string | null;
     spotify_url?: string | null;
+    bio?: string;
+    origin_country?: string;
+    website_url?: string;
+    apple_music_url?: string;
   };
   stage?: {
     name: string;
@@ -126,7 +131,7 @@ export default function TripDetails() {
           .from('shows')
           .select(`
                 *,
-                bands (id, name, image_url, spotify_url),
+                bands (id, name, image_url, spotify_url, bio, origin_country, website_url, apple_music_url),
                 stages (name)
             `)
           .eq('festival_id', tripData.festival_id);
@@ -500,72 +505,48 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
 
 
           return (
-            <div key={show.id} className="relative h-72 rounded-xl overflow-hidden shadow-lg group border border-slate-800 hover:border-blue-500/50 transition-colors">
-              {/* Background Image */}
-              <div className="absolute inset-0 z-0">
-                {show.bands.image_url ? (
-                  <img
-                    src={show.bands.image_url}
-                    alt={show.bands.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                    <Music className="w-16 h-16 text-slate-700" />
-                  </div>
-                )}
-                {/* Gradient Overlay: Darker at bottom, lighter at top */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-900/60 to-transparent" />
-              </div>
-
-              {/* Content Content Container */}
-              <div className="relative z-10 h-full flex flex-col justify-end">
-                
-                {/* Info Area (pushed to bottom by flex-col justify-end, sitting above rating) */}
-                <div className="px-4 pb-3">
-                  {/* Time & Stage */}
-                  <div className="flex items-center gap-2 text-xs font-medium text-slate-300 uppercase tracking-wider mb-1">
-                     <span className="drop-shadow-sm">
-                        {show.time_tbd || !show.start_time
-                          ? 'Time TBD'
-                          : new Date(show.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                        }
-                     </span>
-                     <span className="text-slate-500">•</span>
-                     <span className="truncate max-w-[150px] drop-shadow-sm">{show.stage?.name || 'Stage TBD'}</span>
-                  </div>
-
-                  {/* Band Name */}
-                  <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-2 min-w-0">
-                        <h4 className={clsx("text-2xl font-bold text-white truncate drop-shadow-lg", show.type === 'headliner' && "text-yellow-400")}>
-                          {show.bands.name}
-                        </h4>
-                        {show.type === 'headliner' && <span className="flex-shrink-0 text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 rounded uppercase tracking-wider font-bold shadow-sm">Headliner</span>}
-                     </div>
-                     
-                     {show.bands.spotify_url && (
-                        <a
-                          href={show.bands.spotify_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#1DB954] hover:text-[#1ed760] transition-colors p-1 bg-black/30 rounded-full hover:bg-black/50 backdrop-blur-sm"
-                          title="Listen on Spotify"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <Music className="w-5 h-5" />
-                        </a>
-                      )}
-                  </div>
+            <BandCard
+              key={show.id}
+              band={show.bands as any}
+              imageHeight="h-72"
+              title={
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className={clsx(show.type === 'headliner' && "text-yellow-400")}>{show.bands.name}</span>
+                  {show.type === 'headliner' && <span className="flex-shrink-0 text-[10px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1.5 rounded uppercase tracking-wider font-bold shadow-sm">Headliner</span>}
                 </div>
-
-                {/* Rating Control */}
-                {/* bg-black/40 (40 opacity) allows background visibility. User requested ~10% opacity, we use 40% to balance visibility vs readability of icons */}
-                <div className="bg-black/40 backdrop-blur-[2px] p-2 border-t border-white/10">
-                   <RatingControl myVote={myVote} onVote={(val: number) => handleVote(show.id, val)} />
+              }
+              subtitle={
+                <div className="flex items-center gap-2 text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  <span className="drop-shadow-sm">
+                    {show.time_tbd || !show.start_time
+                      ? 'Time TBD'
+                      : new Date(show.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                    }
+                  </span>
+                  <span className="text-slate-500">•</span>
+                  <span className="truncate max-w-[150px] drop-shadow-sm">{show.stage?.name || 'Stage TBD'}</span>
                 </div>
-              </div>
-            </div>
+              }
+              topRightActions={
+                show.bands.spotify_url && (
+                  <a
+                    href={show.bands.spotify_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1.5 bg-black/40 hover:bg-black/60 backdrop-blur rounded-full text-[#1DB954] hover:text-[#1ed760] transition-colors border border-white/10"
+                    title="Listen on Spotify"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Music className="w-4 h-4" />
+                  </a>
+                )
+              }
+              footer={
+                <div className="px-2 py-1">
+                  <RatingControl myVote={myVote} onVote={(val: number) => handleVote(show.id, val)} />
+                </div>
+              }
+            />
           );
         })}
       </div>
