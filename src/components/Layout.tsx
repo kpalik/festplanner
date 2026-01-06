@@ -1,14 +1,31 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Calendar, Users, Tent, Music } from 'lucide-react';
 import PwaInstaller from './PwaInstaller';
 import clsx from 'clsx';
+import { supabase } from '../lib/supabase';
 
 export default function Layout() {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [userTrips, setUserTrips] = useState<{ id: string }[]>([]);
+
+  useEffect(() => {
+    if (user) {
+      fetchUserTrips();
+    }
+  }, [user]);
+
+  const fetchUserTrips = async () => {
+    try {
+      const { data } = await supabase.from('trips').select('id');
+      setUserTrips(data || []);
+    } catch (error) {
+      console.error('Error fetching user trips for nav:', error);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -17,8 +34,14 @@ export default function Layout() {
 
   const isActive = (path: string) => {
     if (path === '/' && location.pathname !== '/') return false;
+    // For single trip link, check if we are on that specific trip page
+    if (path.startsWith('/trips/') && location.pathname === path) return true;
     return location.pathname.startsWith(path);
   };
+
+  const tripNav = userTrips.length === 1
+    ? { to: `/trips/${userTrips[0].id}`, label: 'My Trip' }
+    : { to: '/trips', label: 'My Trips' };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row">
@@ -45,7 +68,7 @@ export default function Layout() {
           <div className="pt-4 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Discover</div>
           <NavItem to="/festivals" icon={<Tent />} label="Festivals" active={isActive('/festivals')} />
           <NavItem to="/bands" icon={<Music />} label="Bands" active={isActive('/bands')} />
-          <NavItem to="/trips" icon={<Users />} label="My Trips" active={isActive('/trips')} />
+          <NavItem to={tripNav.to} icon={<Users />} label={tripNav.label} active={isActive(tripNav.to) || (tripNav.label === 'My Trips' && isActive('/trips'))} />
           {/* Admin Links would go here based on role */}
         </nav>
 
@@ -79,7 +102,7 @@ export default function Layout() {
         <MobileNavItem to="/" icon={<Calendar />} label="Home" active={location.pathname === '/'} />
         <MobileNavItem to="/festivals" icon={<Tent />} label="Festivals" active={isActive('/festivals')} />
         <MobileNavItem to="/bands" icon={<Music />} label="Bands" active={isActive('/bands')} />
-        <MobileNavItem to="/trips" icon={<Users />} label="Trips" active={isActive('/trips')} />
+        <MobileNavItem to={tripNav.to} icon={<Users />} label="Trips" active={isActive(tripNav.to) || (tripNav.label === 'My Trips' && isActive('/trips'))} />
       </div>
     </div>
   );
