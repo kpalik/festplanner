@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, Trash, Music, Edit } from 'lucide-react';
+import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, Trash, Music, Edit, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { BandCard } from '../components/BandCard';
@@ -468,6 +468,8 @@ export default function TripDetails() {
 function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpdate }: any) {
   const [selectedDay, setSelectedDay] = useState('all');
   const [playingShowId, setPlayingShowId] = useState<string | null>(null);
+  const [hideRated, setHideRated] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleVote = async (showId: string, rating: number) => {
     if (!currentUserId) return;
@@ -493,6 +495,18 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
   };
 
   const filteredShows = shows.filter((s: Show) => {
+    // 1. Filter by Search Query
+    if (searchQuery && !s.bands.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
+
+    // 2. Filter by Hide Rated
+    if (hideRated && currentUserId) {
+      const hasRated = interactions.some((i: any) => i.show_id === s.id && i.user_id === currentUserId && i.interaction_type > 0);
+      if (hasRated) return false;
+    }
+
+    // 3. Filter by Day
     if (selectedDay === 'all') return true;
 
     // If Date TBD, only show in 'all' (already covered) or maybe a specific 'TBD' filter if added.
@@ -518,6 +532,37 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
 
   return (
     <div className="space-y-6">
+      {/* Search and Filter Controls */}
+      <div className="flex flex-col md:flex-row gap-4 justify-between md:items-center bg-slate-900 border border-slate-800 p-4 rounded-xl">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search artists..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full bg-slate-800 border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none"
+          />
+        </div>
+
+        {/* Filters */}
+        <div className="flex items-center gap-4">
+          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={hideRated}
+                onChange={(e) => setHideRated(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+            </div>
+            <span>Hide Rated</span>
+          </label>
+        </div>
+      </div>
+
       {/* Day Filter */}
       <div className="flex flex-wrap gap-2">
         <button
