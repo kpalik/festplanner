@@ -533,34 +533,32 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
   return (
     <div className="space-y-6">
       {/* Search and Filter Controls */}
-      <div className="flex flex-col md:flex-row gap-4 justify-between md:items-center bg-slate-900 border border-slate-800 p-4 rounded-xl">
+      <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 p-3 rounded-xl sticky top-[73px] z-30 shadow-xl shadow-slate-950/50 backdrop-blur-md bg-slate-900/90 md:relative md:top-0 md:bg-slate-900 md:shadow-none md:p-4">
         {/* Search */}
-        <div className="relative flex-1">
+        <div className="relative flex-1 min-w-0">
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search artists..."
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-slate-800 border-slate-700 rounded-lg pl-9 pr-4 py-2 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full bg-slate-800 border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm text-white focus:ring-2 focus:ring-blue-500 outline-none placeholder:text-slate-600"
           />
         </div>
 
         {/* Filters */}
-        <div className="flex items-center gap-4">
-          <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer select-none">
-            <div className="relative">
-              <input
-                type="checkbox"
-                checked={hideRated}
-                onChange={(e) => setHideRated(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-500 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-            </div>
-            <span>Hide Rated</span>
-          </label>
-        </div>
+        <label className="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer select-none flex-shrink-0 bg-slate-800/50 px-3 py-2 rounded-lg border border-slate-700/50 hover:bg-slate-800 transition-colors">
+          <div className="relative">
+            <input
+              type="checkbox"
+              checked={hideRated}
+              onChange={(e) => setHideRated(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+          </div>
+          <span className="font-medium whitespace-nowrap">Hide Rated</span>
+        </label>
       </div>
 
       {/* Day Filter */}
