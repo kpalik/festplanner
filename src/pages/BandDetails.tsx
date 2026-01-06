@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Globe, Music, ExternalLink, Edit, Loader2 } from 'lucide-react';
+import { ArrowLeft, Globe, Music, ExternalLink, Edit, Loader2, RefreshCw } from 'lucide-react';
 import { EditBandModal, type Band } from '../components/EditBandModal';
 
 export default function BandDetails() {
@@ -30,6 +30,121 @@ export default function BandDetails() {
             setBand(data);
         } catch (error) {
             console.error('Error fetching band:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchSpotifyData = async () => {
+        if (!band) return;
+        if (!confirm('Sync data from Spotify? This will update the band image, links and biography.')) return;
+
+        const rapidKey = import.meta.env.VITE_RAPIDAPI_KEY;
+        const rapidHost = import.meta.env.VITE_RAPIDAPI_HOST;
+
+        if (!rapidKey || !rapidHost) {
+            alert('Missing RapidAPI credentials in .env');
+            return;
+        }
+
+        try {
+            setLoading(true);
+            let spotifyUrl = band.spotify_url;
+            let imageUrl = band.image_url;
+            const updatePayload: any = {};
+
+            // 1. If we don't have a Spotify URL, try to find one
+            if (!spotifyUrl) {
+                const encodedName = encodeURIComponent(band.name);
+                const searchUrl = `https://${rapidHost}/search/?q=${encodedName}&type=artists&offset=0&limit=1&numberOfTopResults=1`;
+
+                const sr = await fetch(searchUrl, {
+                    method: 'GET',
+                    headers: {
+                        'X-Rapidapi-Key': rapidKey,
+                        'X-Rapidapi-Host': rapidHost
+                    }
+                });
+
+                if (!sr.ok) throw new Error('RapidAPI Search failed');
+
+                const searchData = await sr.json();
+                const artistItem = searchData?.artists?.items?.[0]?.data;
+
+                if (artistItem) {
+                    const uri = artistItem.uri; // "spotify:artist:ID"
+                    const spotifyId = uri.split(':')[2];
+                    spotifyUrl = `https://open.spotify.com/artist/${spotifyId}`;
+                    updatePayload.spotify_url = spotifyUrl;
+
+                    // Also try to get image if missing
+                    if (!imageUrl) {
+                        const images: any[] = artistItem.visuals?.avatarImage?.sources || [];
+                        images.sort((a: any, b: any) => b.width - a.width);
+                        if (images.length > 0) {
+                            imageUrl = images[0].url;
+                            updatePayload.image_url = imageUrl;
+                        }
+                    }
+                }
+            }
+
+            // 2. Fetch Bio using Artist ID (if we have a URL now)
+            if (spotifyUrl) {
+                // Extract ID from URL (https://open.spotify.com/artist/ID) or URI
+                let artistId = '';
+                if (spotifyUrl.includes('open.spotify.com/artist/')) {
+                    const parts = spotifyUrl.split('open.spotify.com/artist/');
+                    artistId = parts[1].split('?')[0].split('/')[0];
+                } else if (spotifyUrl.includes('spotify:artist:')) {
+                    artistId = spotifyUrl.split(':')[2];
+                }
+
+                if (artistId) {
+                    const overviewUrl = `https://${rapidHost}/artist_overview/?id=${artistId}`;
+                    const or = await fetch(overviewUrl, {
+                        headers: {
+                            'X-Rapidapi-Key': rapidKey,
+                            'X-Rapidapi-Host': rapidHost
+                        }
+                    });
+
+                    if (or.ok) {
+                        const overviewData = await or.json();
+                        const bioText = overviewData?.data?.artist?.profile?.biography?.text;
+
+                        // Clean defaults if needed, but for now just take it
+                        if (bioText) {
+                            // 1. Strip HTML tags
+                            let content = bioText.replace(/<[^>]*>?/gm, '');
+
+                            // 2. Decode HTML entities (e.g. &#xff08;)
+                            const textarea = document.createElement('textarea');
+                            textarea.innerHTML = content;
+                            content = textarea.value;
+
+                            updatePayload.bio = content;
+                        }
+                    }
+                }
+            }
+
+            if (Object.keys(updatePayload).length > 0) {
+                const { error } = await (supabase as any)
+                    .from('bands')
+                    .update(updatePayload)
+                    .eq('id', band.id);
+
+                if (error) throw error;
+                fetchBand(); // Refresh
+                alert('Band data updated from Spotify!');
+            } else {
+                alert('No new data found on Spotify.');
+            }
+
+        } catch (error: any) {
+            console.error('Spotify Sync Error:', error);
+            alert('Error syncing with Spotify: ' + error.message);
         } finally {
             setLoading(false);
         }
@@ -63,7 +178,14 @@ export default function BandDetails() {
                     )}
 
                     {isAdmin && (
-                        <div className="absolute top-4 right-4">
+                        <div className="absolute top-4 right-4 flex gap-2">
+                            <button
+                                onClick={fetchSpotifyData}
+                                className="p-2 bg-slate-900/60 hover:bg-slate-900 backdrop-blur rounded-full text-green-400 hover:text-green-300 transition-all border border-white/10"
+                                title="Sync from Spotify"
+                            >
+                                <RefreshCw className="w-5 h-5" />
+                            </button>
                             <button
                                 onClick={() => setIsEditOpen(true)}
                                 className="p-2 bg-slate-900/60 hover:bg-slate-900 backdrop-blur rounded-full text-white transition-all border border-white/10"
