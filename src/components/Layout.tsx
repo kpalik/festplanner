@@ -78,6 +78,7 @@ export default function Layout() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 z-50 safe-area-bottom">
         <MobileNavItem to="/" icon={<Calendar />} label="Home" active={location.pathname === '/'} />
         <MobileNavItem to="/festivals" icon={<Tent />} label="Festivals" active={isActive('/festivals')} />
+        <MobileNavItem to="/bands" icon={<Music />} label="Bands" active={isActive('/bands')} />
         <MobileNavItem to="/trips" icon={<Users />} label="Trips" active={isActive('/trips')} />
       </div>
     </div>
