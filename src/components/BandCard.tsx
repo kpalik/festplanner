@@ -65,7 +65,7 @@ export function BandCard({
 
                 {/* Center Play Button Overlay */}
                 {showCenterPlayButton && band.spotify_url && onPlayClick && (
-                    <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute inset-0 z-10 flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity duration-300">
                         <button
                             onClick={(e) => { e.stopPropagation(); onPlayClick(); }}
                             className="w-16 h-16 bg-black/40 hover:bg-black/60 backdrop-blur rounded-full flex items-center justify-center text-white hover:text-green-400 border border-white/20 hover:border-green-400/50 hover:scale-110 transition-all duration-300 shadow-2xl group/play"
