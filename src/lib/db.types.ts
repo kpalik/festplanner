@@ -158,6 +158,7 @@ export interface Database {
           festival_id: string | null
           created_by: string | null
           created_at: string
+          is_ranking_hidden: boolean
         }
         Insert: {
           id?: string
@@ -166,6 +167,7 @@ export interface Database {
           festival_id?: string | null;
           created_by?: string | null;
           created_at?: string
+          is_ranking_hidden?: boolean
         }
         Update: {
           id?: string
@@ -174,6 +176,7 @@ export interface Database {
           festival_id?: string | null;
           created_by?: string | null;
           created_at?: string
+          is_ranking_hidden?: boolean
         }
       }
       trip_members: {
