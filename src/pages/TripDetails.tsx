@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, T
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { BandCard } from '../components/BandCard';
+import { SpotifyEmbed } from '../components/SpotifyEmbed';
 
 interface Trip {
   id: string;
@@ -427,6 +428,7 @@ export default function TripDetails() {
 
 function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpdate }: any) {
   const [selectedDay, setSelectedDay] = useState('all');
+  const [playingShowId, setPlayingShowId] = useState<string | null>(null);
 
   const handleVote = async (showId: string, rating: number) => {
     if (!currentUserId) return;
@@ -509,6 +511,14 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
               key={show.id}
               band={show.bands as any}
               imageHeight="h-72"
+              showCenterPlayButton={true}
+              isPlayerOpen={playingShowId === show.id}
+              onPlayClick={show.bands.spotify_url ? () => setPlayingShowId(playingShowId === show.id ? null : show.id) : undefined}
+              playerContent={
+                show.bands.spotify_url && (
+                  <SpotifyEmbed spotifyUrl={show.bands.spotify_url} height={152} />
+                )
+              }
               title={
                 <div className="flex items-center gap-2 min-w-0">
                   <span className={clsx(show.type === 'headliner' && "text-yellow-400")}>{show.bands.name}</span>
@@ -534,7 +544,7 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
                     target="_blank"
                     rel="noopener noreferrer"
                     className="p-1.5 bg-black/40 hover:bg-black/60 backdrop-blur rounded-full text-[#1DB954] hover:text-[#1ed760] transition-colors border border-white/10"
-                    title="Listen on Spotify"
+                    title="Open in Spotify App"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Music className="w-4 h-4" />

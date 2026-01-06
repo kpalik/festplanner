@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Globe, Music, Edit, Loader2, RefreshCw } from 'lucide-react';
 import { EditBandModal, type Band } from '../components/EditBandModal';
 import { BandProfile } from '../components/BandProfile';
+import { SpotifyEmbed } from '../components/SpotifyEmbed';
 
 export default function BandDetails() {
     const { id } = useParams<{ id: string }>();
@@ -206,6 +207,11 @@ export default function BandDetails() {
                 </div>
 
                 <div className="p-8">
+                    {band.spotify_url && (
+                        <div className="mb-8">
+                            <SpotifyEmbed spotifyUrl={band.spotify_url} height={152} />
+                        </div>
+                    )}
                     <BandProfile band={band} />
                 </div>
             </div>

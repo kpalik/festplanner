@@ -8,6 +8,7 @@ import { ImageUpload } from '../components/ImageUpload';
 import { EditBandModal, type Band } from '../components/EditBandModal';
 import { BandCard } from '../components/BandCard';
 import { BandImporter } from '../components/Bands/BandImporter';
+import { SpotifyPlayerModal } from '../components/SpotifyPlayerModal';
 
 export default function Bands() {
     const navigate = useNavigate();
@@ -18,6 +19,7 @@ export default function Bands() {
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
     const [selectedBand, setSelectedBand] = useState<Band | null>(null);
+    const [playingBand, setPlayingBand] = useState<Band | null>(null);
 
     useEffect(() => {
         fetchBands();
@@ -108,14 +110,14 @@ export default function Bands() {
     };
 
     const fetchMissingSpotifyData = async () => {
-        const missingDataBands = bands.filter(b => !b.image_url || !b.spotify_url);
+        const missingDataBands = bands.filter(b => !b.image_url || !b.spotify_url || !b.bio);
 
         if (missingDataBands.length === 0) {
-            alert("All bands already have image and Spotify URL!");
+            alert("All bands already have image, bio and Spotify URL!");
             return;
         }
 
-        if (!confirm(`Found ${missingDataBands.length} bands with missing data. Fetch from Spotify? This might take a while.`)) return;
+        if (!confirm(`Found ${missingDataBands.length} bands with missing data (image, bio, or url). Fetch from Spotify? This might take a while.`)) return;
 
         const rapidKey = import.meta.env.VITE_RAPIDAPI_KEY;
         const rapidHost = import.meta.env.VITE_RAPIDAPI_HOST;
@@ -131,34 +133,85 @@ export default function Bands() {
 
         for (const band of missingDataBands) {
             try {
-                const encodedName = encodeURIComponent(band.name);
-                const url = `https://${rapidHost}/search/?q=${encodedName}&type=artists&offset=0&limit=1&numberOfTopResults=1`;
+                let spotifyUrl = band.spotify_url;
+                let imageUrl = band.image_url;
+                let bio = band.bio;
+                const updatePayload: any = {};
 
-                const response = await fetch(url, {
-                    method: 'GET',
-                    headers: { 'X-Rapidapi-Key': rapidKey, 'X-Rapidapi-Host': rapidHost }
-                });
+                // 1. Search if we miss fundamental identifiers or image
+                if (!spotifyUrl || !imageUrl) {
+                    const encodedName = encodeURIComponent(band.name);
+                    const url = `https://${rapidHost}/search/?q=${encodedName}&type=artists&offset=0&limit=1&numberOfTopResults=1`;
 
-                if (!response.ok) throw new Error('RapidAPI failed');
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: { 'X-Rapidapi-Key': rapidKey, 'X-Rapidapi-Host': rapidHost }
+                    });
 
-                const data = await response.json();
-                const artistItem = data?.artists?.items?.[0]?.data;
+                    if (response.ok) {
+                        const data = await response.json();
+                        const artistItem = data?.artists?.items?.[0]?.data;
 
-                if (artistItem) {
-                    const uri = artistItem.uri;
-                    const spotifyId = uri.split(':')[2];
-                    const spotifyUrl = `https://open.spotify.com/artist/${spotifyId}`;
+                        if (artistItem) {
+                            const uri = artistItem.uri;
+                            const spotifyId = uri.split(':')[2];
+                            const foundSpotifyUrl = `https://open.spotify.com/artist/${spotifyId}`;
 
-                    const images: any[] = artistItem.visuals?.avatarImage?.sources || [];
-                    images.sort((a: any, b: any) => b.width - a.width);
-                    const imageUrl = images[0]?.url;
+                            if (!spotifyUrl) {
+                                spotifyUrl = foundSpotifyUrl;
+                                updatePayload.spotify_url = spotifyUrl;
+                            }
 
-                    const updatePayload: any = { spotify_url: spotifyUrl };
-                    if (imageUrl) updatePayload.image_url = imageUrl;
+                            if (!imageUrl) {
+                                const images: any[] = artistItem.visuals?.avatarImage?.sources || [];
+                                images.sort((a: any, b: any) => b.width - a.width);
+                                if (images.length > 0) {
+                                    imageUrl = images[0]?.url;
+                                    updatePayload.image_url = imageUrl;
+                                }
+                            }
+                        }
+                    }
+                }
 
+                // 2. Fetch Bio if we have URL but no bio
+                if (spotifyUrl && !bio) {
+                    let artistId = '';
+                    if (spotifyUrl.includes('open.spotify.com/artist/')) {
+                        const parts = spotifyUrl.split('open.spotify.com/artist/');
+                        artistId = parts[1].split('?')[0].split('/')[0];
+                    } else if (spotifyUrl.includes('spotify:artist:')) {
+                        artistId = spotifyUrl.split(':')[2];
+                    }
+
+                    if (artistId) {
+                        const overviewUrl = `https://${rapidHost}/artist_overview/?id=${artistId}`;
+                        const or = await fetch(overviewUrl, {
+                            headers: { 'X-Rapidapi-Key': rapidKey, 'X-Rapidapi-Host': rapidHost }
+                        });
+
+                        if (or.ok) {
+                            const overviewData = await or.json();
+                            const bioText = overviewData?.data?.artist?.profile?.biography?.text;
+
+                            if (bioText) {
+                                let content = bioText.replace(/<[^>]*>?/gm, '');
+                                const textarea = document.createElement('textarea');
+                                textarea.innerHTML = content;
+                                content = textarea.value;
+
+                                bio = content;
+                                updatePayload.bio = content;
+                            }
+                        }
+                    }
+                }
+
+                if (Object.keys(updatePayload).length > 0) {
                     const { error } = await (supabase as any).from('bands').update(updatePayload).eq('id', band.id);
                     if (!error) updatedCount++;
                 }
+
             } catch (error) {
                 console.error(`Error fetching for ${band.name}:`, error);
                 errors++;
@@ -237,6 +290,7 @@ export default function Bands() {
                             band={band}
                             imageHeight="h-48"
                             onCardClick={() => navigate(`/bands/${band.id}`)}
+                            onPlayClick={() => setPlayingBand(band)}
                             topRightActions={isAdmin && (
                                 <>
                                     <button
@@ -283,6 +337,11 @@ export default function Bands() {
                     onUpdated={fetchBands}
                 />
             )}
+            <SpotifyPlayerModal
+                isOpen={!!playingBand}
+                onClose={() => setPlayingBand(null)}
+                band={playingBand}
+            />
 
         </div>
     );
