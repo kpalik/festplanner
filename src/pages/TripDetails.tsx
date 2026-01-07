@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, Trash, Music, Edit, Search } from 'lucide-react';
@@ -68,6 +68,7 @@ interface Interaction {
 export default function TripDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
 
   const [trip, setTrip] = useState<Trip | null>(null);
@@ -80,11 +81,23 @@ export default function TripDetails() {
   // Member Invite State
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
 
   const isOrganizer = useMemo(() => {
     if (!user || !trip) return false;
     return trip.created_by === user.id || members.some(m => m.user_id === user.id && m.role === 'admin');
   }, [user, trip, members]);
+
+  useEffect(() => {
+    if (searchParams.get('new') === 'true') {
+      setIsWelcomeModalOpen(true);
+      setSearchParams(prev => {
+        const newParams = new URLSearchParams(prev);
+        newParams.delete('new');
+        return newParams;
+      });
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (id) {
@@ -460,6 +473,37 @@ export default function TripDetails() {
         trip={trip}
         onUpdate={handleUpdateTrip}
       />
+
+      <WelcomeModal
+        isOpen={isWelcomeModalOpen}
+        onClose={() => setIsWelcomeModalOpen(false)}
+      />
+    </div>
+  );
+}
+
+function WelcomeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+        <div className="p-6 text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-purple-500/30">
+            <Tent className="w-8 h-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-4">Trip Created!</h2>
+          <p className="text-slate-300 leading-relaxed mb-8">
+            Now that you have your trip ready, you can Invite your friends, vote for best shows, and check the rankings. Enjoy!
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-200 transition-colors"
+          >
+            Let's go!
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

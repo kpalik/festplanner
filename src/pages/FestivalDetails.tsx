@@ -3,9 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ImageUpload } from '../components/ImageUpload';
 import { LineupImporter } from '../components/Festivals/LineupImporter';
+import { CreateTripModal } from '../components/CreateTripModal';
 import { BandCombobox } from '../components/BandCombobox';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft, Plus, Trash2, MapPin, Calendar, Tent, Loader2, Music, X, Edit, CircleHelp } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, MapPin, Calendar, Tent, Loader2, Music, X, Edit, CircleHelp, Heart, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 
@@ -57,6 +58,9 @@ export default function FestivalDetails() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
 
+    const [isCreateTripOpen, setIsCreateTripOpen] = useState(false);
+    const [userFestivalTrips, setUserFestivalTrips] = useState<{ id: string }[]>([]);
+
     const festivalDays = React.useMemo(() => {
         if (!festival?.start_date || !festival?.end_date) return [];
         const start = new Date(festival.start_date);
@@ -67,8 +71,6 @@ export default function FestivalDetails() {
         }
         return days;
     }, [festival]);
-
-
 
     const groupedLineup = React.useMemo(() => {
         const daysToRender = selectedDayLineup === 'all' ? festivalDays : [new Date(selectedDayLineup)];
@@ -117,10 +119,6 @@ export default function FestivalDetails() {
         }
     }, [id, user]);
 
-
-
-
-
     const fetchFestivalData = async () => {
         try {
             setLoading(true);
@@ -133,6 +131,17 @@ export default function FestivalDetails() {
 
             if (festivalError) throw festivalError;
             setFestival(festivalData);
+
+            // Fetch user trips for this festival
+            if (user) {
+                const { data: userTripsData } = await (supabase as any)
+                    .from('trips')
+                    .select('id, trip_members!inner(user_id)')
+                    .eq('festival_id', id!)
+                    .eq('trip_members.user_id', user.id);
+
+                setUserFestivalTrips(userTripsData || []);
+            }
 
             // Fetch stages
             const { data: stagesData, error: stagesError } = await supabase
@@ -219,8 +228,6 @@ export default function FestivalDetails() {
         return <div className="text-center py-10 text-slate-400">Festival not found.</div>;
     }
 
-
-
     return (
         <div className="max-w-4xl mx-auto">
             <button onClick={() => navigate('/festivals')} className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors">
@@ -272,11 +279,47 @@ export default function FestivalDetails() {
                 )}
             </div>
 
+            {/* CTA Section */}
+            <div className="mb-10">
+                {userFestivalTrips.length === 0 ? (
+                    <button
+                        onClick={() => setIsCreateTripOpen(true)}
+                        className="w-full py-4 text-lg font-bold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-xl shadow-lg shadow-purple-900/20 transform transition-all hover:scale-[1.01] flex items-center justify-center gap-3"
+                    >
+                        <Tent className="w-6 h-6" />
+                        Create trip and invite friends to start voting!
+                    </button>
+                ) : userFestivalTrips.length === 1 ? (
+                    <button
+                        onClick={() => navigate(`/trips/${userFestivalTrips[0].id}`)}
+                        className="w-full py-4 text-lg font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl shadow-lg transform transition-all hover:scale-[1.01] flex items-center justify-center gap-3"
+                    >
+                        <Heart className="w-6 h-6 text-pink-500 fill-pink-500/20" />
+                        Vote for best shows
+                    </button>
+                ) : (
+                    <button
+                        onClick={() => navigate('/trips')}
+                        className="w-full py-4 text-lg font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl shadow-lg transform transition-all hover:scale-[1.01] flex items-center justify-center gap-3"
+                    >
+                        <Users className="w-6 h-6 text-purple-400" />
+                        See my trips to vote for best shows
+                    </button>
+                )}
+            </div>
+
             <EditFestivalModal
                 isOpen={isEditOpen}
                 onClose={() => setIsEditOpen(false)}
                 festival={festival}
                 onUpdated={fetchFestivalData}
+            />
+
+            <CreateTripModal
+                isOpen={isCreateTripOpen}
+                onClose={() => setIsCreateTripOpen(false)}
+                festivalId={festival.id}
+                festivalName={festival.name}
             />
 
             {/* Stages Section */}
@@ -404,7 +447,7 @@ export default function FestivalDetails() {
                                     Unscheduled / TBD Date
                                 </h3>
                                 <div className="space-y-2">
-                                    {unscheduledShows.map(show => (
+                                    {unscheduledShows.map((show: Show) => (
                                         <div key={show.id} className="p-3 bg-slate-800/50 rounded-lg flex items-center justify-between group hover:bg-slate-800 transition-colors">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 bg-slate-900 rounded-lg flex items-center justify-center text-slate-500 font-mono text-sm border border-slate-700">
@@ -455,7 +498,7 @@ export default function FestivalDetails() {
                             </div>
                         )}
 
-                        {groupedLineup.map(dayGroup => (
+                        {groupedLineup.map((dayGroup: { dateStr: string, date: Date, stages: { stage: Stage, shows: Show[] }[] }) => (
                             <div key={dayGroup.dateStr} className="animate-in fade-in slide-in-from-bottom-4 duration-500">
                                 {/* Show day header if 'All' is selected */}
                                 {(selectedDayLineup === 'all') && (
@@ -477,7 +520,7 @@ export default function FestivalDetails() {
                                                 </h4>
                                             </div>
                                             <div className="divide-y divide-slate-800/50">
-                                                {stageGroup.shows.map(show => (
+                                                {stageGroup.shows.map((show: Show) => (
                                                     <div key={show.id} className="p-3 flex items-center gap-4 hover:bg-slate-800/20 transition group">
                                                         <div className="text-center min-w-[3.5rem]">
                                                             <div className="font-bold text-white text-base leading-tight">

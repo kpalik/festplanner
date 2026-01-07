@@ -7,7 +7,7 @@ import clsx from 'clsx';
 import { supabase } from '../lib/supabase';
 
 export default function Layout() {
-  const { signOut, user } = useAuth();
+  const { signOut, user, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [userTrips, setUserTrips] = useState<{ id: string }[]>([]);
@@ -67,7 +67,7 @@ export default function Layout() {
           <NavItem to="/" icon={<Calendar />} label="Dashboard" active={location.pathname === '/'} />
           <div className="pt-4 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Discover</div>
           <NavItem to="/festivals" icon={<Tent />} label="Festivals" active={isActive('/festivals')} />
-          <NavItem to="/bands" icon={<Music />} label="Bands" active={isActive('/bands')} />
+          {isSuperAdmin && <NavItem to="/bands" icon={<Music />} label="Bands" active={isActive('/bands')} />}
           <NavItem to={tripNav.to} icon={<Users />} label={tripNav.label} active={isActive(tripNav.to) || (tripNav.label === 'My Trips' && isActive('/trips'))} />
           {/* Admin Links would go here based on role */}
         </nav>
@@ -101,7 +101,7 @@ export default function Layout() {
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 z-50 safe-area-bottom">
         <MobileNavItem to="/" icon={<Calendar />} label="Home" active={location.pathname === '/'} />
         <MobileNavItem to="/festivals" icon={<Tent />} label="Festivals" active={isActive('/festivals')} />
-        <MobileNavItem to="/bands" icon={<Music />} label="Bands" active={isActive('/bands')} />
+        {isSuperAdmin && <MobileNavItem to="/bands" icon={<Music />} label="Bands" active={isActive('/bands')} />}
         <MobileNavItem to={tripNav.to} icon={<Users />} label="Trips" active={isActive(tripNav.to) || (tripNav.label === 'My Trips' && isActive('/trips'))} />
       </div>
     </div>
