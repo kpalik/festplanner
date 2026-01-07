@@ -1,17 +1,21 @@
+```
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Loader2, ArrowRight, KeyRound } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function Login() {
+  const [searchParams] = useSearchParams();
+  const isInvited = searchParams.get('invited') === 'true';
+  const initialEmail = searchParams.get('email') || '';
+
   const [step, setStep] = useState<'email' | 'otp'>('email');
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail);
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const { signInWithOtp, verifyOtp } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const isInvited = searchParams.get('invited') === 'true';
 
   const handleSendOtp = async (e: React.FormEvent) => {
@@ -72,7 +76,7 @@ export default function Login() {
                 ? (isInvited
                   ? "You've been invited to a festival! Register or log in to cast your votes for shows!"
                   : 'Enter your email to receive a login code')
-                : `We sent a code to ${email}`}
+                : `We sent a code to ${ email } `}
             </p>
           </div>
 
@@ -97,7 +101,7 @@ export default function Login() {
               </div>
 
               {message && (
-                <div className={`p-4 rounded-lg text-sm ${message.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                <div className={`p - 4 rounded - lg text - sm ${ message.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20' } `}>
                   {message.text}
                 </div>
               )}
@@ -132,7 +136,7 @@ export default function Login() {
               </div>
 
               {message && (
-                <div className={`p-4 rounded-lg text-sm ${message.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
+                <div className={`p - 4 rounded - lg text - sm ${ message.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20' } `}>
                   {message.text}
                 </div>
               )}
