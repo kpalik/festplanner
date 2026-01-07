@@ -15,12 +15,46 @@ serve(async (req) => {
     try {
         const { email, tripId, tripName, inviterName } = await req.json()
 
-        if (!email) {
+        // 1. Authenticate user
+        const authHeader = req.headers.get('Authorization')
+        if (!authHeader) {
             return new Response(
-                JSON.stringify({ error: 'Email is required' }),
-                { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+                JSON.stringify({ error: 'Missing Authorization header' }),
+                { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
         }
+
+        const supabaseClient = createClient(
+            Deno.env.get('SUPABASE_URL') ?? '',
+            Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+            { global: { headers: { Authorization: authHeader } } }
+        )
+
+        const { data: { user }, error: userError } = await supabaseClient.auth.getUser()
+        if (userError || !user) {
+            return new Response(
+                JSON.stringify({ error: 'Invalid User Token', details: userError }),
+                { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
+        // 2. Authorize: Check if user is an organizer of the trip
+        const { data: membership } = await supabaseClient
+            .from('trip_members')
+            .select('role')
+            .eq('trip_id', tripId)
+            .eq('user_id', user.id)
+            .single()
+
+        if (!membership || membership.role !== 'organizer') {
+            return new Response(
+                JSON.stringify({ error: 'Unauthorized: You must be an organizer to invite users.' }),
+                { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+        }
+
+        // 3. Proceed with Service Role for Resend (Environment vars)
+        // We typically access Env vars directly, no need for separate client for that.
 
         const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
         if (!RESEND_API_KEY) {
