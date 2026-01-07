@@ -192,7 +192,7 @@ export default function TripDetails() {
     if (!trip) return;
     try {
       // 1. Check if profile exists
-      const { data: profile } = await (supabase as any).from('profiles').select('id, email').eq('email', email).single();
+      const { data: profile } = await (supabase as any).from('profiles').select('id, email').eq('email', email).maybeSingle();
 
       let insertPayload: any = {
         trip_id: trip.id,
