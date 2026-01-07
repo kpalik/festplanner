@@ -67,7 +67,8 @@ serve(async (req) => {
 
         // Determine invite link
         const origin = req.headers.get('origin') || 'https://festplanner.app'; // Fallback to production URL if origin missing
-        const inviteLink = `${origin}/trips/${tripId}`;
+        // Redirect to login page with return URL to the trip
+        const inviteLink = `${origin}/login?invited=true&redirect=/trips/${tripId}`;
 
         const res = await fetch('https://api.resend.com/emails', {
             method: 'POST',

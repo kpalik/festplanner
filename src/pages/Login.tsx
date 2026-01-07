@@ -45,8 +45,9 @@ export default function Login() {
       setMessage({ type: 'error', text: error.message });
       setLoading(false);
     } else {
-      // Login successful, redirect handled by AuthContext listener or manual navigate
-      navigate('/');
+      // Login successful
+      const redirectPath = searchParams.get('redirect');
+      navigate(redirectPath || '/');
     }
   };
 
