@@ -71,3 +71,40 @@ export default defineConfig([
   },
 ])
 ```
+
+## Supabase Edge Functions
+
+### Setup & Deployment
+
+Ten projekt korzysta z Supabase Edge Functions do obsługi logiki backendowej, takiej jak wysyłanie zaproszeń mailowych.
+
+1. **Wymagania**: Upewnij się, że masz zainstalowane `supabase` CLI lub używasz `npx supabase`.
+
+2. **Zmienne środowiskowe**:
+   Funkcja `invite-user` wymaga skonfigurowania klucza API do serwisu Resend.
+   
+   Ustaw sekret w swoim projekcie Supabase:
+   ```bash
+   npx supabase secrets set RESEND_API_KEY=twoj_klucz_api_resend
+   ```
+
+3. **Wdrożenie funkcji**:
+   Przy pierwszej instalacji projektu oraz po każdej zmianie w pliku `supabase/functions/invite-user/index.ts`, musisz wdrożyć funkcję na środowisko zdalne:
+
+   ```bash
+   npx supabase functions deploy invite-user
+   ```
+
+   > **Opcja `--no-verify-jwt`**: Flaga ta wyłącza weryfikację tokenu autoryzacyjnego (JWT). W przypadku funkcji `invite-user`, którą wywołują zalogowani użytkownicy (organizatorzy), **nie zalecamy** używania tej flagi. Jej brak (#bezpiecznie) sprawia, że Supabase automatycznie odrzuci próby wywołania funkcji przez niezalogowane osoby.
+
+   Jeśli korzystasz z wielu projektów, Supabase poprosi Cię o wybranie odpowiedniego (lub możesz użyć flagi `--project-ref`).
+
+### Aktualizacja funkcji
+
+Gdy wprowadzasz zmiany w kodzie funkcji (np. zmiana szablonu maila, nowa logika):
+1. Edytuj plik `supabase/functions/invite-user/index.ts`.
+2. Uruchom polecenie wdrożenia:
+   ```bash
+   npx supabase functions deploy invite-user
+   ```
+   Bez tego kroku, Supabase będzie nadal używać starej wersji funkcji.

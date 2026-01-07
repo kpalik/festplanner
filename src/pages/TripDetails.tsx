@@ -212,20 +212,19 @@ export default function TripDetails() {
         if (error.code === '23505') alert('User already invited or in trip.');
         else throw error;
       } else {
-        // 2. If new user, try to send invite email via Edge Function
-        if (!profile) {
-          try {
-            await supabase.functions.invoke('invite-user', {
-              body: {
-                email,
-                tripId: trip.id,
-                tripName: trip.name
-              }
-            });
-          } catch (invErr: any) {
-            console.warn('Failed to send invite email:', invErr);
-            alert('Warning: Only invite created in DB. Email failed to send: ' + (invErr.message || invErr));
-          }
+        // 2. Always try to send invite email via Edge Function
+        try {
+          await supabase.functions.invoke('invite-user', {
+            body: {
+              email,
+              tripId: trip.id,
+              tripName: trip.name,
+              inviterName: user?.email // Optional: pass who invited
+            }
+          });
+        } catch (invErr: any) {
+          console.error('Failed to send invite email:', invErr);
+          alert('Warning: User added to trip DB, BUT email invite failed to send. Details: ' + (invErr.message || JSON.stringify(invErr)));
         }
 
         fetchTripData();
