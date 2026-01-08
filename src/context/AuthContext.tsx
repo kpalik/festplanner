@@ -27,7 +27,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    const fetchUserRole = async (userId: string) => {
+    const fetchUserRole = async (sessionUser: any) => {
+      const userId = sessionUser.id;
       console.log(`[AuthDebug] ${new Date().toISOString()} Starting fetchUserRole for ${userId}`);
       try {
         // Add timeout for role fetch as well
@@ -40,6 +41,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
 
         if (error) {
+          if (error.code === 'PGRST116') {
+             console.warn(`[AuthDebug] Profile not found for ${userId}. Creating default profile...`);
+             // Auto-create profile
+             const { error: insertError } = await (supabase as any).from('profiles').insert([{
+                 id: userId,
+                 email: sessionUser.email,
+                 full_name: sessionUser.user_metadata?.full_name || sessionUser.email?.split('@')[0] || 'User',
+                 avatar_url: sessionUser.user_metadata?.avatar_url
+             }]);
+
+             if (insertError) {
+                 console.error(`[AuthDebug] Failed to auto-create profile:`, insertError);
+                 return 'user'; // Fallback
+             }
+             return 'user';
+          }
           console.warn(`[AuthDebug] ${new Date().toISOString()} Error fetching user role:`, error);
           return null;
         }
@@ -68,7 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('[AuthDebug] Error linking invitations:', e);
         }
 
-        const role = await fetchUserRole(currentUser.id);
+        const role = await fetchUserRole(currentUser);
         if (mounted && role) {
           currentUser = { ...currentUser, role };
         }
