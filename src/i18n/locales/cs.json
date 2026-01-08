@@ -36,7 +36,10 @@
     "code_sent_success": "Kód odeslán! Zkontrolujte svůj email.",
     "verification_code_label": "Ověřovací Kód",
     "back_btn": "Zpět",
-    "verify_login_btn": "Ověřit a Přihlásit"
+    "verify_login_btn": "Ověřit a Přihlásit",
+    "intro_title": "Plánujte Společně, Bavte se Společně",
+    "intro_desc": "FestPlanner vám a vašim přátelům pomáhá organizovat festivalové výlety. Hlasujte pro vystoupení, kontrolujte harmonogramy a hodnoťte své oblíbené interprety!",
+    "supported_events": "Aktuálně podporujeme:"
   },
   "dashboard": {
     "title": "Moje Plány Festivalů",

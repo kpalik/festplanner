@@ -23,6 +23,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[]>([]);
+  const [popularFestivals, setPopularFestivals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function Dashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: tripsData, error: tripsError } = await supabase
         .from('trips')
         .select(`
                 id, name, festival_id,
@@ -42,8 +43,17 @@ export default function Dashboard() {
         .order('created_at', { ascending: false })
         .limit(3);
 
-      if (error) throw error;
-      setTrips(data || []);
+      if (tripsError) throw tripsError;
+      setTrips(tripsData || []);
+
+      const { data: festivalsData } = await supabase
+        .from('festivals')
+        .select('id, name, image_url, start_date')
+        .order('start_date', { ascending: true }) // Upcoming soonest
+        .limit(3);
+        
+      setPopularFestivals(festivalsData || []);
+
     } catch (e) {
       console.error(e);
     } finally {
@@ -109,15 +119,35 @@ export default function Dashboard() {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-purple-500/30 transition-colors">
           <h2 className="text-xl font-semibold mb-4 text-white">{t('dashboard.popular_festivals')}</h2>
           <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-slate-950/50">
-                <div className="w-12 h-12 bg-slate-800 rounded-lg"></div>
-                <div>
-                  <div className="h-4 w-32 bg-slate-800 rounded mb-2"></div>
-                  <div className="h-3 w-20 bg-slate-800 rounded"></div>
+            {loading ? (
+                [1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-slate-950/50 animate-pulse">
+                        <div className="w-12 h-12 bg-slate-800 rounded-lg"></div>
+                        <div>
+                        <div className="h-4 w-32 bg-slate-800 rounded mb-2"></div>
+                        <div className="h-3 w-20 bg-slate-800 rounded"></div>
+                        </div>
+                    </div>
+                ))
+            ) : popularFestivals.length > 0 ? (
+                popularFestivals.map((f) => (
+                <div key={f.id} onClick={() => navigate('/events')} className="flex items-center gap-4 p-3 rounded-xl bg-slate-950/50 hover:bg-slate-900 border border-transparent hover:border-slate-800 transition cursor-pointer group">
+                  <div className="w-12 h-12 bg-slate-800 rounded-lg overflow-hidden flex-shrink-0">
+                    {f.image_url ? (
+                         <img src={f.image_url} className="w-full h-full object-cover" />
+                    ) : (
+                         <div className="w-full h-full flex items-center justify-center text-slate-600"><Tent className="w-5 h-5" /></div>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-medium text-slate-200 group-hover:text-purple-400 transition-colors">{f.name}</h3>
+                    <p className="text-xs text-slate-500">{new Date(f.start_date).toLocaleDateString(undefined, { year: 'numeric', month: 'long' })}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+                <div className="text-slate-500 text-sm py-4">{t('events.no_events')}</div>
+            )}
           </div>
         </div>
       </div>

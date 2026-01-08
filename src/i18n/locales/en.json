@@ -36,7 +36,10 @@
     "code_sent_success": "Code sent! Check your email.",
     "verification_code_label": "Verification Code",
     "back_btn": "Back",
-    "verify_login_btn": "Verify & Login"
+    "verify_login_btn": "Verify & Login",
+    "intro_title": "Plan Together, Party Together",
+    "intro_desc": "FestPlanner helps you and your friends organize festival trips. Vote for shows, check schedules, and rank your favorite acts together!",
+    "supported_events": "Currently Featuring:"
   },
   "dashboard": {
     "title": "My Festival Plans",
