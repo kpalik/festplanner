@@ -85,5 +85,63 @@
       "cancel": "Anuluj",
       "create": "Utwórz Wyjazd"
     }
+  },
+  "trip_details": {
+    "back_to_trips": "Wróć do Wyjazdów",
+    "unknown_festival": "Nieznane Wydarzenie",
+    "edit_trip_btn": "Edytuj",
+    "invite_btn": "Zaproś",
+    "delete_trip_btn": "Usuń Wyjazd",
+    "delete_confirm": "Czy na pewno chcesz usunąć ten wyjazd? Tej operacji nie można cofnąć.",
+    "remove_member_confirm": "Czy na pewno chcesz usunąć {{email}} z tego wyjazdu? Głosy tej osoby zostaną ukryte w rankingu.",
+    "no_description": "Brak opisu.",
+    "members_count": "Uczestników",
+    "trip_party": "Ekipa",
+    "pending_status": "Oczekuje",
+    "remove_member_title": "Usuń Uczestnika",
+    "tabs": {
+      "schedule": "Line-up i Głosy",
+      "ranking": "Ranking Grupy"
+    },
+    "filters": {
+      "search_placeholder": "Szukaj...",
+      "hide_rated": "Ukryj Ocenione",
+      "all_days": "Wszystkie Dni"
+    },
+    "ranking": {
+      "overall": "Ranking Ogólny"
+    },
+    "welcome_modal": {
+      "title": "Wyjazd Utworzony!",
+      "message": "Twój wyjazd jest gotowy! Możesz teraz zaprosić znajomych, głosować na koncerty i sprawdzać rankingi. Baw się dobrze!",
+      "cta": "Zaczynamy!"
+    },
+    "not_found": "Nie znaleziono wyjazdu.",
+    "modals": {
+      "invite": {
+        "title": "Zaproś do Wyjazdu",
+        "email_label": "Adres Email",
+        "email_placeholder": "znajomy@example.com",
+        "cancel": "Anuluj",
+        "submit": "Wyślij Zaproszenie"
+      },
+      "edit": {
+        "title": "Edytuj Wyjazd",
+        "name_label": "Nazwa Wyjazdu",
+        "desc_label": "Opis",
+        "hide_ranking": "Ukryj Ranking Grupy dla Uczestników",
+        "cancel": "Anuluj",
+        "submit": "Zapisz Zmiany"
+      },
+      "create": {
+        "title": "Utwórz Wyjazd na {{festival}}",
+        "name_label": "Nazwa Wyjazdu",
+        "desc_label": "Opis (Opcjonalnie)",
+        "cancel": "Anuluj",
+        "submit": "Utwórz Wyjazd",
+        "placeholder_name": "np. Wakacje 2024",
+        "placeholder_desc": "Notatki do wyjazdu..."
+      }
+    }
   }
 }

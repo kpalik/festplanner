@@ -85,5 +85,63 @@
       "cancel": "Cancel",
       "create": "Create Trip"
     }
+  },
+  "trip_details": {
+    "back_to_trips": "Back to Trips",
+    "unknown_festival": "Unknown Festival",
+    "edit_trip_btn": "Edit Trip",
+    "invite_btn": "Invite",
+    "delete_trip_btn": "Delete Trip",
+    "delete_confirm": "Are you sure you want to delete this trip? This action cannot be undone.",
+    "remove_member_confirm": "Are you sure you want to remove {{email}} from this trip? Their votes will be hidden from the ranking.",
+    "no_description": "No description provided.",
+    "members_count": "Members",
+    "trip_party": "Trip Party",
+    "pending_status": "Pending",
+    "remove_member_title": "Remove Member",
+    "tabs": {
+      "schedule": "Lineup & Votes",
+      "ranking": "Group Ranking"
+    },
+    "filters": {
+      "search_placeholder": "Search...",
+      "hide_rated": "Hide Rated",
+      "all_days": "All Days"
+    },
+    "ranking": {
+      "overall": "Overall Ranking"
+    },
+    "welcome_modal": {
+      "title": "Trip Created!",
+      "message": "Now that you have your trip ready, you can Invite your friends, vote for best shows, and check the rankings. Enjoy!",
+      "cta": "Let's go!"
+    },
+    "not_found": "Trip not found.",
+    "modals": {
+      "invite": {
+        "title": "Invite to Trip",
+        "email_label": "Email Address",
+        "email_placeholder": "friend@example.com",
+        "cancel": "Cancel",
+        "submit": "Send Invite"
+      },
+      "edit": {
+        "title": "Edit Trip",
+        "name_label": "Trip Name",
+        "desc_label": "Description",
+        "hide_ranking": "Hide Group Ranking from Members",
+        "cancel": "Cancel",
+        "submit": "Save Changes"
+      },
+      "create": {
+        "title": "Create Trip for {{festival}}",
+        "name_label": "Trip Name",
+        "desc_label": "Description (Optional)",
+        "cancel": "Cancel",
+        "submit": "Create Trip",
+        "placeholder_name": "e.g. Summer Vibes 2024",
+        "placeholder_desc": "Any notes for your trip..."
+      }
+    }
   }
 }

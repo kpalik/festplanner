@@ -43,7 +43,7 @@ interface Show {
 }
 
 export default function FestivalDetails() {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user, isAdmin } = useAuth();
@@ -269,7 +269,7 @@ export default function FestivalDetails() {
                         <div className="flex gap-6 text-slate-300">
                             <div className="flex items-center gap-2">
                                 <Calendar className="w-5 h-5 text-purple-400" />
-                                <span>{new Date(festival.start_date).toLocaleDateString()} - {new Date(festival.end_date).toLocaleDateString()}</span>
+                                <span>{new Date(festival.start_date).toLocaleDateString(i18n.language)} - {new Date(festival.end_date).toLocaleDateString(i18n.language)}</span>
                             </div>
                         </div>
                     </div>
@@ -434,7 +434,7 @@ export default function FestivalDetails() {
                                     onClick={() => setSelectedDayLineup(dStr)}
                                     className={`px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap ${selectedDayLineup === dStr ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}
                                 >
-                                    {day.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+                                    {day.toLocaleDateString(i18n.language, { weekday: 'short', month: 'short', day: 'numeric' })}
                                 </button>
                             )
                         })}
@@ -506,7 +506,7 @@ export default function FestivalDetails() {
                                 {(selectedDayLineup === 'all') && (
                                     <div className="flex items-center gap-4 mb-4">
                                         <h3 className="text-lg font-bold text-slate-300">
-                                            {dayGroup.date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+                                            {dayGroup.date.toLocaleDateString(i18n.language, { weekday: 'long', month: 'long', day: 'numeric' })}
                                         </h3>
                                         <div className="h-px bg-slate-800 flex-1" />
                                     </div>
