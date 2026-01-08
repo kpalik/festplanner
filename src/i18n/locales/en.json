@@ -62,5 +62,28 @@
     "unscheduled": "Unscheduled / TBD Date",
     "no_shows": "No shows scheduled for this selection.",
     "stage_tbd": "Stage TBD"
+  },
+  "trips": {
+    "title": "My Trips",
+    "subtitle": "Manage your festival plans with friends.",
+    "create_btn": "Create Trip",
+    "no_festival_linked": "No Festival Linked",
+    "no_description": "No description.",
+    "members": "Members",
+    "view_details": "View Details",
+    "empty_title": "No trips yet",
+    "empty_subtitle": "Start planning your next adventure by creating a trip linked to a festival.",
+    "create_first_btn": "Create your first trip",
+    "modal": {
+      "title": "Plan New Trip",
+      "name_label": "Trip Name",
+      "name_placeholder": "e.g. Summer Vibes 2024",
+      "select_festival_label": "Select Festival",
+      "choose_festival_placeholder": "-- Choose Festival --",
+      "description_label": "Description (Optional)",
+      "description_placeholder": "Add notes about logistics, meeting points...",
+      "cancel": "Cancel",
+      "create": "Create Trip"
+    }
   }
 }

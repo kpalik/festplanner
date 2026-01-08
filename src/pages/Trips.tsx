@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { Plus, Users, Calendar, Loader2, X, Tent } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 
 interface Trip {
@@ -26,6 +27,7 @@ interface FestivalOption {
 }
 
 export default function Trips() {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const [trips, setTrips] = useState<Trip[]>([]);
     const [loading, setLoading] = useState(true);
@@ -70,15 +72,15 @@ export default function Trips() {
         <div className="max-w-6xl mx-auto">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-white mb-2">My Trips</h1>
-                    <p className="text-slate-400">Manage your festival plans with friends.</p>
+                    <h1 className="text-3xl font-bold text-white mb-2">{t('trips.title')}</h1>
+                    <p className="text-slate-400">{t('trips.subtitle')}</p>
                 </div>
                 <button
                     onClick={() => setIsCreateOpen(true)}
                     className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-blue-500/20"
                 >
                     <Plus className="w-5 h-5" />
-                    Create Trip
+                    {t('trips.create_btn')}
                 </button>
             </div>
 
@@ -113,20 +115,20 @@ export default function Trips() {
                                 <h3 className="text-xl font-bold text-white mb-1 group-hover:text-blue-400 transition-colors">{trip.name}</h3>
                                 <div className="text-slate-400 text-sm mb-4 flex items-center gap-2">
                                     <Tent className="w-4 h-4 text-slate-600" />
-                                    {trip.festivals?.name || "No Festival Linked"}
+                                    {trip.festivals?.name || t('trips.no_festival_linked')}
                                 </div>
 
                                 <p className="text-slate-500 text-sm line-clamp-2 mb-4 flex-1">
-                                    {trip.description || "No description."}
+                                    {trip.description || t('trips.no_description')}
                                 </p>
 
                                 <div className="pt-4 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
                                     <div className="flex items-center gap-1">
                                         <Users className="w-3 h-3" />
-                                        {trip.trip_members[0]?.count || 1} Members
+                                        {trip.trip_members[0]?.count || 1} {t('trips.members')}
                                     </div>
                                     <button className="text-blue-400 hover:text-blue-300 font-medium transition-colors">
-                                        View Details →
+                                        {t('trips.view_details')} →
                                     </button>
                                 </div>
                             </div>
@@ -136,13 +138,13 @@ export default function Trips() {
                     {trips.length === 0 && !loading && (
                         <div className="col-span-full py-16 flex flex-col items-center justify-center text-center text-slate-500 border-2 border-dashed border-slate-800 rounded-2xl bg-slate-900/30">
                             <Tent className="w-12 h-12 mb-4 text-slate-700" />
-                            <h3 className="text-lg font-medium text-slate-300 mb-1">No trips yet</h3>
-                            <p className="max-w-sm mx-auto mb-6">Start planning your next adventure by creating a trip linked to a festival.</p>
+                            <h3 className="text-lg font-medium text-slate-300 mb-1">{t('trips.empty_title')}</h3>
+                            <p className="max-w-sm mx-auto mb-6">{t('trips.empty_subtitle')}</p>
                             <button
                                 onClick={() => setIsCreateOpen(true)}
                                 className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition"
                             >
-                                Create your first trip
+                                {t('trips.create_first_btn')}
                             </button>
                         </div>
                     )}
@@ -155,6 +157,7 @@ export default function Trips() {
 }
 
 function CreateTripModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onClose: () => void; onCreated: () => void }) {
+    const { t } = useTranslation();
     const [festivals, setFestivals] = useState<FestivalOption[]>([]);
     const [formData, setFormData] = useState({
         name: '',
@@ -239,7 +242,7 @@ function CreateTripModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onCl
                     >
                         <div className="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl pointer-events-auto flex flex-col max-h-[90vh]">
                             <div className="flex items-center justify-between p-6 border-b border-slate-800">
-                                <h2 className="text-xl font-bold text-white">Plan New Trip</h2>
+                                <h2 className="text-xl font-bold text-white">{t('trips.modal.title')}</h2>
                                 <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition">
                                     <X className="w-5 h-5" />
                                 </button>
@@ -247,11 +250,11 @@ function CreateTripModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onCl
 
                             <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Trip Name</label>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('trips.modal.name_label')}</label>
                                     <input
                                         type="text"
                                         required
-                                        placeholder="e.g. Summer Vibes 2024"
+                                        placeholder={t('trips.modal.name_placeholder')}
                                         className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none"
                                         value={formData.name}
                                         onChange={e => setFormData({ ...formData, name: e.target.value })}
@@ -259,14 +262,14 @@ function CreateTripModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onCl
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Select Festival</label>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('trips.modal.select_festival_label')}</label>
                                     <select
                                         className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
                                         value={formData.festival_id}
                                         onChange={e => setFormData({ ...formData, festival_id: e.target.value })}
                                         required
                                     >
-                                        <option value="">-- Choose Festival --</option>
+                                        <option value="">{t('trips.modal.choose_festival_placeholder')}</option>
                                         {festivals.map(f => (
                                             <option key={f.id} value={f.id}>
                                                 {f.name} ({new Date(f.start_date).getFullYear()})
@@ -276,10 +279,10 @@ function CreateTripModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onCl
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-slate-300 mb-1">Description (Optional)</label>
+                                    <label className="block text-sm font-medium text-slate-300 mb-1">{t('trips.modal.description_label')}</label>
                                     <textarea
                                         rows={3}
-                                        placeholder="Add notes about logistics, meeting points..."
+                                        placeholder={t('trips.modal.description_placeholder')}
                                         className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none"
                                         value={formData.description}
                                         onChange={e => setFormData({ ...formData, description: e.target.value })}
@@ -292,7 +295,7 @@ function CreateTripModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onCl
                                         onClick={onClose}
                                         className="px-4 py-2 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg transition"
                                     >
-                                        Cancel
+                                        {t('trips.modal.cancel')}
                                     </button>
                                     <button
                                         type="submit"
@@ -300,7 +303,7 @@ function CreateTripModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onCl
                                         className="px-6 py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white rounded-lg font-medium transition flex items-center gap-2"
                                     >
                                         {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                                        Create Trip
+                                        {t('trips.modal.create')}
                                     </button>
                                 </div>
                             </form>

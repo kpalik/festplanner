@@ -29,7 +29,7 @@
     "verify_login_btn": "Weryfikuj i Zaloguj"
   },
   "dashboard": {
-    "title": "Moje Plany Festiwalowe",
+    "title": "Moje Plany Wyjazdowe",
     "subtitle": "Zarządzaj nadchodzącymi wyjazdami i harmonogramami.",
     "upcoming_trips": "Nadchodzące Wyjazdy",
     "view_all": "Zobacz Wszystkie",
@@ -62,5 +62,28 @@
     "unscheduled": "Nieustalona Data / TBD",
     "no_shows": "Brak zaplanowanych koncertów na ten wybór.",
     "stage_tbd": "Scena TBD"
+  },
+  "trips": {
+    "title": "Moje Wyjazdy",
+    "subtitle": "Zarządzaj swoimi planami festiwalowymi ze znajomymi.",
+    "create_btn": "Utwórz Wyjazd",
+    "no_festival_linked": "Brak powiązanego festiwalu",
+    "no_description": "Brak opisu.",
+    "members": "Uczestnicy",
+    "view_details": "Szczegóły",
+    "empty_title": "Brak wyjazdów",
+    "empty_subtitle": "Zacznij planować kolejną przygodę, tworząc wyjazd powiązany z festiwalem.",
+    "create_first_btn": "Utwórz swój pierwszy wyjazd",
+    "modal": {
+      "title": "Zaplanuj Nowy Wyjazd",
+      "name_label": "Nazwa Wyjazdu",
+      "name_placeholder": "np. Summer Vibes 2024",
+      "select_festival_label": "Wybierz Festiwal",
+      "choose_festival_placeholder": "-- Wybierz Festiwal --",
+      "description_label": "Opis (Opcjonalnie)",
+      "description_placeholder": "Dodaj notatki o logistyce, miejscu spotkania...",
+      "cancel": "Anuluj",
+      "create": "Utwórz Wyjazd"
+    }
   }
 }
