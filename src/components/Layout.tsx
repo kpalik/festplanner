@@ -7,6 +7,8 @@ import PwaInstaller from './PwaInstaller';
 import LanguageSwitcher from './LanguageSwitcher';
 import clsx from 'clsx';
 import { supabase } from '../lib/supabase';
+import AuthorModal from './AuthorModal';
+import { Heart } from 'lucide-react';
 
 export default function Layout() {
   const { t } = useTranslation();
@@ -14,6 +16,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
   const [userTrips, setUserTrips] = useState<{ id: string }[]>([]);
+  const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -75,7 +78,14 @@ export default function Layout() {
           {/* Admin Links would go here based on role */}
         </nav>
 
-        <div className="mb-4">
+        <div className="mb-4 space-y-2">
+          <button
+            onClick={() => setIsAuthorModalOpen(true)}
+            className="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors w-full"
+          >
+            <Heart size={20} />
+            <span>{t('navigation.author')}</span>
+          </button>
           <LanguageSwitcher />
         </div>
 
@@ -102,6 +112,7 @@ export default function Layout() {
       <main className="flex-1 overflow-auto bg-slate-950 p-4 pb-24 md:p-8 md:pb-8">
         <Outlet />
         <PwaInstaller />
+        <AuthorModal isOpen={isAuthorModalOpen} onClose={() => setIsAuthorModalOpen(false)} />
       </main>
 
       {/* Mobile Bottom Nav */}
@@ -110,6 +121,13 @@ export default function Layout() {
         <MobileNavItem to="/events" icon={<Tent />} label={t('navigation.events')} active={isActive('/events')} />
         {isSuperAdmin && <MobileNavItem to="/bands" icon={<Music />} label={t('navigation.bands')} active={isActive('/bands')} />}
         <MobileNavItem to={tripNav.to} icon={<Users />} label={t('navigation.trips')} active={isActive(tripNav.to) || (tripNav.label === t('navigation.my_trips') && isActive('/trips'))} />
+        <button
+          onClick={() => setIsAuthorModalOpen(true)}
+          className="flex flex-col items-center gap-1 min-w-[4rem] text-slate-500 hover:text-slate-300"
+        >
+          <Heart size={24} />
+          <span className="text-xs font-medium">{t('navigation.author')}</span>
+        </button>
       </div>
     </div>
   );

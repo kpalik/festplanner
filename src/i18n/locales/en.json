@@ -8,7 +8,17 @@
     "my_trip": "My Trip",
     "my_trips": "My Trips",
     "sign_out": "Sign Out",
-    "home": "Home"
+    "home": "Home",
+    "author": "Author"
+  },
+  "author_modal": {
+    "title": "About the Author",
+    "content_p1": "Hi, I'm Krzysiek. I created this app for my family's needs, but I'll be happy if it helps someone else plan an unforgettable trip.",
+    "content_p2": "If you think it's worth it - you can buy me a coffee here:",
+    "content_p3": "If you have any comments or want to plan another event - feel free to write to",
+    "content_p4": "Have fun and stay safe!",
+    "buy_coffee": "Buy me a coffee",
+    "email_subject": "FestPlanner"
   },
   "common": {
     "loading": "Loading...",

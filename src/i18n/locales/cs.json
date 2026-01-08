@@ -8,7 +8,17 @@
     "my_trip": "Můj Výlet",
     "my_trips": "Moje Výlety",
     "sign_out": "Odhlásit se",
-    "home": "Domů"
+    "home": "Domů",
+    "author": "Autor"
+  },
+  "author_modal": {
+    "title": "O Autorovi",
+    "content_p1": "Ahoj, jsem Krzysiek. Tuto aplikaci jsem vytvořil pro potřeby své rodiny, ale budu rád, pokud pomůže i někomu dalšímu naplánovat nezapomenutelný výlet.",
+    "content_p2": "Pokud si myslíte, že to stojí za to - můžete mi koupit kávu zde:",
+    "content_p3": "Pokud máte nějaké připomínky nebo chcete naplánovat jinou událost - neváhejte napsat na",
+    "content_p4": "Bavte se a buďte v bezpečí!",
+    "buy_coffee": "Kup mi kávu",
+    "email_subject": "FestPlanner"
   },
   "common": {
     "loading": "Načítání...",
