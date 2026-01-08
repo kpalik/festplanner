@@ -123,7 +123,9 @@
         "email_label": "Adres Email",
         "email_placeholder": "znajomy@example.com",
         "cancel": "Anuluj",
-        "submit": "Wyślij Zaproszenie"
+        "submit": "Wyślij Zaproszenie",
+        "sending": "Wysyłanie...",
+        "sent_success": "Zaproszenie wysłane!"
       },
       "edit": {
         "title": "Edytuj Wyjazd",

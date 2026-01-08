@@ -133,7 +133,9 @@
         "email_label": "Emailová Adresa",
         "email_placeholder": "kamarad@example.com",
         "cancel": "Zrušit",
-        "submit": "Poslat Pozvánku"
+        "submit": "Poslat Pozvánku",
+        "sending": "Odesílání...",
+        "sent_success": "Pozvánka odeslána!"
       },
       "edit": {
         "title": "Upravit Výlet",

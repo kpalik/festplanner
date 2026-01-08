@@ -203,8 +203,8 @@ export default function TripDetails() {
     }
   };
 
-  const handleInvite = async (email: string) => {
-    if (!trip) return;
+  const handleInvite = async (email: string): Promise<boolean> => {
+    if (!trip) return false;
     try {
       // 1. Check if profile exists
       const { data: profile } = await (supabase as any).from('profiles').select('id, email').eq('email', email).maybeSingle();
@@ -224,7 +224,10 @@ export default function TripDetails() {
 
       const { error } = await (supabase as any).from('trip_members').insert([insertPayload]);
       if (error) {
-        if (error.code === '23505') alert('User already invited or in trip.');
+        if (error.code === '23505') {
+            alert('User already invited or in trip.');
+            return false;
+        }
         else throw error;
       } else {
         // 2. Always try to send invite email via Edge Function
@@ -243,11 +246,12 @@ export default function TripDetails() {
         }
 
         fetchTripData();
-        setIsInviteOpen(false);
+        return true;
       }
     } catch (e: any) {
       console.error('Error inviting:', e);
       alert('Error inviting: ' + e.message);
+      return false;
     }
   };
 
@@ -847,11 +851,30 @@ function TripRanking({ shows, days, interactions }: any) {
 function InviteMemberModal({ isOpen, onClose, onInvite }: any) {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Reset state when modal opens/closes
+  useEffect(() => {
+      if (isOpen) {
+          setEmail('');
+          setIsLoading(false);
+          setIsSuccess(false);
+      }
+  }, [isOpen]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onInvite(email);
-    setEmail('');
+    setIsLoading(true);
+    const success = await onInvite(email);
+    setIsLoading(false);
+    
+    if (success) {
+        setIsSuccess(true);
+        setTimeout(() => {
+            onClose();
+        }, 2000); // Close after 2 seconds
+    }
   }
 
   return (
@@ -862,17 +885,32 @@ function InviteMemberModal({ isOpen, onClose, onInvite }: any) {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none p-4">
             <div className="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 pointer-events-auto">
               <h2 className="text-xl font-bold text-white mb-4">{t('trip_details.modals.invite.title')}</h2>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-sm text-slate-400 mb-1">{t('trip_details.modals.invite.email_label')}</label>
-                  <input type="email" required className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none"
-                    value={email} onChange={e => setEmail(e.target.value)} placeholder={t('trip_details.modals.invite.email_placeholder')} />
+              {isSuccess ? (
+                <div className="flex flex-col items-center justify-center py-6 text-center animate-in fade-in zoom-in duration-300">
+                    <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mb-4">
+                        <Users className="w-8 h-8 text-green-500" />
+                    </div>
+                    <h3 className="text-lg font-bold text-green-400 mb-2">{t('trip_details.modals.invite.sent_success')}</h3>
+                    <p className="text-slate-400 text-sm">
+                        {email}
+                    </p>
                 </div>
-                <div className="flex justify-end gap-2">
-                  <button type="button" onClick={onClose} className="px-4 py-2 text-slate-400 hover:text-white">{t('trip_details.modals.invite.cancel')}</button>
-                  <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg">{t('trip_details.modals.invite.submit')}</button>
-                </div>
-              </form>
+              ) : (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label className="block text-sm text-slate-400 mb-1">{t('trip_details.modals.invite.email_label')}</label>
+                      <input type="email" required className="w-full bg-slate-800 border-slate-700 rounded-lg p-2.5 text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        value={email} onChange={e => setEmail(e.target.value)} placeholder={t('trip_details.modals.invite.email_placeholder')} disabled={isLoading} />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <button type="button" onClick={onClose} className="px-4 py-2 text-slate-400 hover:text-white" disabled={isLoading}>{t('trip_details.modals.invite.cancel')}</button>
+                      <button type="submit" className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg flex items-center gap-2" disabled={isLoading}>
+                          {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
+                          {isLoading ? t('trip_details.modals.invite.sending') : t('trip_details.modals.invite.submit')}
+                      </button>
+                    </div>
+                  </form>
+              )}
             </div>
           </motion.div>
         </>

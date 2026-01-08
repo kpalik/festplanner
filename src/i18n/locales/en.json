@@ -133,7 +133,9 @@
         "email_label": "Email Address",
         "email_placeholder": "friend@example.com",
         "cancel": "Cancel",
-        "submit": "Send Invite"
+        "submit": "Send Invite",
+        "sending": "Sending...",
+        "sent_success": "Invitation sent!"
       },
       "edit": {
         "title": "Edit Trip",
