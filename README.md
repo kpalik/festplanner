@@ -108,3 +108,24 @@ Gdy wprowadzasz zmiany w kodzie funkcji (np. zmiana szablonu maila, nowa logika)
    npx supabase functions deploy invite-user
    ```
    Bez tego kroku, Supabase będzie nadal używać starej wersji funkcji.
+
+## Database Backups
+
+Aby wykonać backup bazy danych Supabase (wersja Free) na lokalny komputer:
+
+1. **Wymagania**: Zainstaluj [PostgreSQL Command Line Tools](https://www.postgresql.org/download/windows/) (pg_dump).
+2. **Uruchomienie**:
+   Otwórz PowerShell w folderze projektu i uruchom:
+   `powershell
+   .\scripts\backup_db.ps1
+   ` 
+3. **Konfiguracja**:
+   Skrypt poprosi o Connection String przy pierwszym uruchomieniu (znajdziesz go w Supabase Dashboard -> Project Settings -> Database -> Connection string -> URI, Mode: Session).
+   Możesz zapisać go w pliku scripts/backup_config.json, aby nie wpisywać go za każdym razem.
+   
+   Alternatywnie, możesz ustawić zmienną środowiskową SUPABASE_DB_URL:
+   `powershell
+    = "postgres://postgres..."
+   ` 
+
+Backupy są zapisywane w folderze ackups/ z datą w nazwie pliku. Folder ten jest ignorowany przez git.
