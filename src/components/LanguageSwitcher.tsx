@@ -62,6 +62,16 @@ export default function LanguageSwitcher() {
             <span>Polski</span>
             {currentLang === 'PL' && <Check size={14} />}
           </button>
+          <button
+            onClick={() => changeLanguage('cs')}
+            className={clsx(
+              "w-full px-4 py-2 text-sm text-left flex items-center justify-between hover:bg-slate-800 transition-colors",
+              currentLang === 'CS' ? "text-purple-400" : "text-slate-300"
+            )}
+          >
+            <span>Čeština</span>
+            {currentLang === 'CS' && <Check size={14} />}
+          </button>
         </div>
       )}
     </div>

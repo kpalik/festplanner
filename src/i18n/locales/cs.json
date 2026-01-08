@@ -1,0 +1,147 @@
+{
+  "navigation": {
+    "dashboard": "Nástěnka",
+    "events": "Události",
+    "bands": "Kapely",
+    "trips": "Výlety",
+    "discover": "Prozkoumat",
+    "my_trip": "Můj Výlet",
+    "my_trips": "Moje Výlety",
+    "sign_out": "Odhlásit se",
+    "home": "Domů"
+  },
+  "common": {
+    "loading": "Načítání...",
+    "error": "Chyba"
+  },
+  "login": {
+    "welcome": "Vítejte ve FestPlanner!",
+    "welcome_enthusiastic": "Vítejte ve FestPlanner!!!",
+    "enter_code": "Zadejte Kód",
+    "invited_msg": "Byli jste pozváni na událost! Zaregistrujte se nebo přihlaste a hlasujte pro vystoupení!",
+    "enter_email_msg": "Zadejte svůj email pro získání přihlašovacího kódu",
+    "code_sent_msg": "Kód jsme poslali na {{email}}",
+    "email_label": "Emailová Adresa",
+    "send_code_btn": "Poslat Kód",
+    "code_sent_success": "Kód odeslán! Zkontrolujte svůj email.",
+    "verification_code_label": "Ověřovací Kód",
+    "back_btn": "Zpět",
+    "verify_login_btn": "Ověřit a Přihlásit"
+  },
+  "dashboard": {
+    "title": "Moje Plány Festivalů",
+    "subtitle": "Spravujte své nadcházející výlety a plány.",
+    "upcoming_trips": "Nadcházející Výlety",
+    "view_all": "Zobrazit Vše",
+    "manage_trips": "Spravovat Výlety",
+    "no_trips": "Zatím žádné naplánované výlety.",
+    "create_trip": "Vytvořit nový Výlet",
+    "popular_festivals": "Populární Události"
+  },
+  "events": {
+    "title": "Události",
+    "subtitle": "Objevujte a spravujte hudební události.",
+    "create_btn": "Vytvořit Událost",
+    "no_events": "Žádné události nenalezeny.",
+    "draft": "Koncept",
+    "tba": "TBA"
+  },
+  "event_details": {
+    "back_to_events": "Zpět na Události",
+    "draft": "Koncept",
+    "vote_cta": "Hlasujte pro nejlepší vystoupení",
+    "create_trip_cta": "Vytvořte výlet a pozvěte přátele, ať můžete začít hlasovat!",
+    "see_my_trips_cta": "Zobrazit moje výlety pro hlasování",
+    "stages": "Pódia",
+    "add_stage_placeholder": "Přidat název pódia...",
+    "no_stages": "Žádná pódia zatím nepřidána.",
+    "lineup": "Line-up",
+    "import_json_btn": "Importovat JSON",
+    "add_show_btn": "Přidat Vystoupení",
+    "all_days": "Všechny Dny",
+    "unscheduled": "Nenaplánováno / Datum TBA",
+    "no_shows": "Žádná vystoupení pro tento výběr.",
+    "stage_tbd": "Pódium TBA"
+  },
+  "trips": {
+    "title": "Moje Výlety",
+    "subtitle": "Spravujte své festivalové plány s přáteli.",
+    "create_btn": "Vytvořit Výlet",
+    "no_festival_linked": "Žádný festival nepropojen",
+    "no_description": "Žádný popis.",
+    "members": "Členové",
+    "view_details": "Zobrazit Detaily",
+    "empty_title": "Zatím žádné výlety",
+    "empty_subtitle": "Začněte plánovat své další dobrodružství vytvořením výletu propojeného s festivalem.",
+    "create_first_btn": "Vytvořte svůj první výlet",
+    "modal": {
+      "title": "Naplánovat Nový Výlet",
+      "name_label": "Název Výletu",
+      "name_placeholder": "např. Summer Vibes 2024",
+      "select_festival_label": "Vybrat Festival",
+      "choose_festival_placeholder": "-- Vyberte Festival --",
+      "description_label": "Popis (Volitelný)",
+      "description_placeholder": "Přidejte poznámky o logistice, místech setkání...",
+      "cancel": "Zrušit",
+      "create": "Vytvořit Výlet"
+    }
+  },
+  "trip_details": {
+    "back_to_trips": "Zpět na Výlety",
+    "unknown_festival": "Neznámý Festival",
+    "edit_trip_btn": "Upravit Výlet",
+    "invite_btn": "Pozvat",
+    "delete_trip_btn": "Smazat Výlet",
+    "delete_confirm": "Opravdu chcete smazat tento výlet? Tuto akci nelze vrátit zpět.",
+    "remove_member_confirm": "Opravdu chcete odebrat {{email}} z tohoto výletu? Jejich hlasy budou skryty z žebříčku.",
+    "no_description": "Žádný popis.",
+    "members_count": "Členů",
+    "trip_party": "Parta",
+    "pending_status": "Čekající",
+    "remove_member_title": "Odebrat Člena",
+    "tabs": {
+      "schedule": "Line-up a Hlasy",
+      "ranking": "Skupinový Žebříček"
+    },
+    "filters": {
+      "search_placeholder": "Hledat...",
+      "hide_rated": "Skrýt Hodnocené",
+      "all_days": "Všechny Dny"
+    },
+    "ranking": {
+      "overall": "Celkový Žebříček"
+    },
+    "welcome_modal": {
+      "title": "Výlet Vytvořen!",
+      "message": "Nyní, když máte výlet připravený, můžete pozvat přátele, hlasovat pro nejlepší vystoupení a sledovat žebříčky. Užijte si to!",
+      "cta": "Jdeme na to!"
+    },
+    "not_found": "Výlet nenalezen.",
+    "modals": {
+      "invite": {
+        "title": "Pozvat do Výletu",
+        "email_label": "Emailová Adresa",
+        "email_placeholder": "kamarad@example.com",
+        "cancel": "Zrušit",
+        "submit": "Poslat Pozvánku"
+      },
+      "edit": {
+        "title": "Upravit Výlet",
+        "name_label": "Název Výletu",
+        "desc_label": "Popis",
+        "hide_ranking": "Skrýt Skupinový Žebříček pro Členy",
+        "cancel": "Zrušit",
+        "submit": "Uložit Změny"
+      },
+      "create": {
+        "title": "Vytvořit Výlet na {{festival}}",
+        "name_label": "Název Výletu",
+        "desc_label": "Popis (Volitelný)",
+        "cancel": "Zrušit",
+        "submit": "Vytvořit Výlet",
+        "placeholder_name": "např. Summer Vibes 2024",
+        "placeholder_desc": "Poznámky k výletu..."
+      }
+    }
+  }
+}
