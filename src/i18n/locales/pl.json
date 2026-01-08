@@ -1,0 +1,66 @@
+{
+  "navigation": {
+    "dashboard": "Pulpit",
+    "events": "Wydarzenia",
+    "bands": "Zespoły",
+    "trips": "Wyjazdy",
+    "discover": "Odkrywaj",
+    "my_trip": "Mój wyjazd",
+    "my_trips": "Moje wyjazdy",
+    "sign_out": "Wyloguj",
+    "home": "Start"
+  },
+  "common": {
+    "loading": "Ładowanie...",
+    "error": "Błąd"
+  },
+  "login": {
+    "welcome": "Witaj w FestPlanner!",
+    "welcome_enthusiastic": "Witaj w FestPlanner!!!",
+    "enter_code": "Wpisz kod",
+    "invited_msg": "Zostałeś zaproszony na wydarzenie! Zarejestruj się lub zaloguj, aby głosować na koncerty!",
+    "enter_email_msg": "Wpisz swój email, aby otrzymać kod logowania",
+    "code_sent_msg": "Wysłaliśmy kod na {{email}}",
+    "email_label": "Adres Email",
+    "send_code_btn": "Wyślij kod",
+    "code_sent_success": "Kod wysłany! Sprawdź email.",
+    "verification_code_label": "Kod weryfikacyjny",
+    "back_btn": "Wstecz",
+    "verify_login_btn": "Weryfikuj i Zaloguj"
+  },
+  "dashboard": {
+    "title": "Moje Plany Festiwalowe",
+    "subtitle": "Zarządzaj nadchodzącymi wyjazdami i harmonogramami.",
+    "upcoming_trips": "Nadchodzące Wyjazdy",
+    "view_all": "Zobacz Wszystkie",
+    "manage_trips": "Zarządzaj Wyjazdami",
+    "no_trips": "Brak zaplanowanych wyjazdów.",
+    "create_trip": "Utwórz nowy Wyjazd",
+    "popular_festivals": "Popularne Wydarzenia"
+  },
+  "events": {
+    "title": "Wydarzenia",
+    "subtitle": "Odkrywaj i zarządzaj wydarzeniami muzycznymi.",
+    "create_btn": "Utwórz Wydarzenie",
+    "no_events": "Nie znaleziono wydarzeń.",
+    "draft": "Szkic",
+    "tba": "TBA"
+  },
+  "event_details": {
+    "back_to_events": "Wróć do Wydarzeń",
+    "draft": "Szkic",
+    "vote_cta": "Głosuj na najlepsze koncerty",
+    "create_trip_cta": "Utwórz wyjazd i zaproś znajomych!",
+    "see_my_trips_cta": "Zobacz wyjazdy, aby zagłosować",
+    "stages": "Sceny",
+    "add_stage_placeholder": "Wpisz nazwę nowej sceny...",
+    "no_stages": "Brak dodanych scen.",
+    "lineup": "Line-up",
+    "import_json_btn": "Importuj JSON",
+    "add_show_btn": "Dodaj Koncert",
+    "all_days": "Wszystkie Dni",
+    "unscheduled": "Nieustalona Data / TBD",
+    "no_shows": "Brak zaplanowanych koncertów na ten wybór.",
+    "stage_tbd": "Scena TBD"
+  }
+}

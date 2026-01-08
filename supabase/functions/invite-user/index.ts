@@ -85,13 +85,13 @@ serve(async (req) => {
                     <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
                         <h1 style="color: #1e293b; font-size: 24px; text-align: center;">Zostałeś zaproszony! / You've been invited!</h1>
                         
-                        <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; border: 1px solid #bfdbfe; margin: 25px 0; text-align: center;">
-                            <p style="margin: 0; color: #1e40af; font-size: 15px; line-height: 1.5;">
+                        <div style="background-color: #faf5ff; padding: 20px; border-radius: 8px; border: 1px solid #e9d5ff; margin: 25px 0; text-align: center;">
+                            <p style="margin: 0; color: #6b21a8; font-size: 15px; line-height: 1.5;">
                                 <strong>⚠️ WAŻNE / IMPORTANT</strong><br/><br/>
                                 Aby uzyskać dostęp do wyjazdu, musisz zalogować się używając dokładnie tego adresu e-mail:<br/>
                                 <em>To access the trip, you MUST log in using exactly this email address:</em>
                             </p>
-                            <p style="margin: 10px 0 0 0; color: #1e3a8a; font-size: 18px; font-weight: bold;">
+                            <p style="margin: 10px 0 0 0; color: #581c87; font-size: 18px; font-weight: bold;">
                                 ${email}
                             </p>
                         </div>
@@ -105,7 +105,7 @@ serve(async (req) => {
                         </p>
 
                         <div style="margin: 35px 0; text-align: center;">
-                            <a href="${inviteLink}" style="display: inline-block; padding: 14px 28px; background-color: #2563EB; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);">
+                            <a href="${inviteLink}" style="display: inline-block; padding: 14px 28px; background-color: #9333ea; background-image: linear-gradient(90deg, #9333ea 0%, #db2777 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(147, 51, 234, 0.25);">
                                 Dołącz do wyjazdu / Join Trip
                             </a>
                         </div>

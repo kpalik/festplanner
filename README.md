@@ -92,7 +92,7 @@ Ten projekt korzysta z Supabase Edge Functions do obsługi logiki backendowej, t
    Przy pierwszej instalacji projektu oraz po każdej zmianie w pliku `supabase/functions/invite-user/index.ts`, musisz wdrożyć funkcję na środowisko zdalne:
 
    ```bash
-   npx supabase functions deploy invite-user
+   npx supabase functions deploy invite-user --no-verify-jwt
    ```
 
    > **Opcja `--no-verify-jwt`**: Flaga ta wyłącza weryfikację tokenu autoryzacyjnego (JWT). W przypadku funkcji `invite-user`, którą wywołują zalogowani użytkownicy (organizatorzy), **nie zalecamy** używania tej flagi. Jej brak (#bezpiecznie) sprawia, że Supabase automatycznie odrzuci próby wywołania funkcji przez niezalogowane osoby.
@@ -105,7 +105,7 @@ Gdy wprowadzasz zmiany w kodzie funkcji (np. zmiana szablonu maila, nowa logika)
 1. Edytuj plik `supabase/functions/invite-user/index.ts`.
 2. Uruchom polecenie wdrożenia:
    ```bash
-   npx supabase functions deploy invite-user
+   npx supabase functions deploy invite-user --no-verify-jwt
    ```
    Bez tego kroku, Supabase będzie nadal używać starej wersji funkcji.
 

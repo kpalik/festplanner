@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 import { Plus, Calendar, MapPin, Loader2, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTranslation } from 'react-i18next';
 
 interface Festival {
   id: string;
@@ -18,6 +19,7 @@ interface Festival {
 import { useNavigate } from 'react-router-dom';
 
 export default function Festivals() {
+  const { t } = useTranslation();
   const [festivals, setFestivals] = useState<Festival[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -60,8 +62,8 @@ export default function Festivals() {
     <div className="max-w-6xl mx-auto">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">Festivals</h1>
-          <p className="text-slate-400">Discover and manage music festivals.</p>
+          <h1 className="text-3xl font-bold text-white mb-2">{t('events.title')}</h1>
+          <p className="text-slate-400">{t('events.subtitle')}</p>
         </div>
         {isAdmin && (
           <button
@@ -69,7 +71,7 @@ export default function Festivals() {
             className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors font-medium shadow-lg shadow-purple-500/20"
           >
             <Plus className="w-5 h-5" />
-            Create Festival
+            {t('events.create_btn')}
           </button>
         )}
       </div>
@@ -83,7 +85,7 @@ export default function Festivals() {
           {festivals.map((festival) => (
             <div
               key={festival.id}
-              onClick={() => navigate(`/festivals/${festival.id}`)}
+              onClick={() => navigate(`/events/${festival.id}`)}
               className="cursor-pointer group bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden hover:border-purple-500/30 transition-all duration-300"
             >
               <div className="h-48 bg-slate-800 relative overflow-hidden">
@@ -99,7 +101,7 @@ export default function Festivals() {
                 </div>
                 {isAdmin && !festival.is_public && (
                   <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded text-xs font-bold uppercase tracking-wider shadow-lg">
-                    Draft
+                    {t('events.draft')}
                   </div>
                 )}
               </div>
@@ -116,7 +118,7 @@ export default function Festivals() {
                   {/* Placeholder for location if we add it later */}
                   <div className="flex items-center gap-1">
                     <MapPin className="w-3 h-3" />
-                    TBA
+                    {t('events.tba')}
                   </div>
                 </div>
               </div>
@@ -125,7 +127,7 @@ export default function Festivals() {
 
           {festivals.length === 0 && !loading && (
             <div className="col-span-full py-12 text-center text-slate-500 border-2 border-dashed border-slate-800 rounded-2xl">
-              <p>No festivals found.</p>
+              <p>{t('events.no_events')}</p>
             </div>
           )}
         </div>

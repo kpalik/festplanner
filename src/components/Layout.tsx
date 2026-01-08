@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import { LogOut, Calendar, Users, Tent, Music } from 'lucide-react';
 import PwaInstaller from './PwaInstaller';
+import LanguageSwitcher from './LanguageSwitcher';
 import clsx from 'clsx';
 import { supabase } from '../lib/supabase';
 
 export default function Layout() {
+  const { t } = useTranslation();
   const { signOut, user, isSuperAdmin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -33,15 +36,12 @@ export default function Layout() {
   };
 
   const isActive = (path: string) => {
-    if (path === '/' && location.pathname !== '/') return false;
-    // For single trip link, check if we are on that specific trip page
-    if (path.startsWith('/trips/') && location.pathname === path) return true;
     return location.pathname.startsWith(path);
   };
 
   const tripNav = userTrips.length === 1
-    ? { to: `/trips/${userTrips[0].id}`, label: 'My Trip' }
-    : { to: '/trips', label: 'My Trips' };
+    ? { to: `/trips/${userTrips[0].id}`, label: t('navigation.my_trip') }
+    : { to: '/trips', label: t('navigation.my_trips') };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row">
@@ -51,9 +51,12 @@ export default function Layout() {
           <img src="/logo.png" className="w-8 h-8 rounded-lg" alt="Logo" />
           <span className="font-bold text-lg bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">FestPlanner</span>
         </div>
-        <button onClick={handleSignOut} className="p-2 text-slate-400 hover:text-white">
-          <LogOut className="w-5 h-5" />
-        </button>
+        <div className="flex items-center gap-1">
+          <LanguageSwitcher />
+          <button onClick={handleSignOut} className="p-2 text-slate-400 hover:text-white">
+            <LogOut className="w-5 h-5" />
+          </button>
+        </div>
       </div>
 
       {/* Desktop Sidebar */}
@@ -64,13 +67,17 @@ export default function Layout() {
         </div>
 
         <nav className="flex-1 space-y-2">
-          <NavItem to="/" icon={<Calendar />} label="Dashboard" active={location.pathname === '/'} />
-          <div className="pt-4 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Discover</div>
-          <NavItem to="/festivals" icon={<Tent />} label="Festivals" active={isActive('/festivals')} />
-          {isSuperAdmin && <NavItem to="/bands" icon={<Music />} label="Bands" active={isActive('/bands')} />}
-          <NavItem to={tripNav.to} icon={<Users />} label={tripNav.label} active={isActive(tripNav.to) || (tripNav.label === 'My Trips' && isActive('/trips'))} />
+          <NavItem to="/" icon={<Calendar />} label={t('navigation.dashboard')} active={location.pathname === '/'} />
+          <div className="pt-4 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('navigation.discover')}</div>
+          <NavItem to="/events" icon={<Tent />} label={t('navigation.events')} active={isActive('/events')} />
+          {isSuperAdmin && <NavItem to="/bands" icon={<Music />} label={t('navigation.bands')} active={isActive('/bands')} />}
+          <NavItem to={tripNav.to} icon={<Users />} label={tripNav.label} active={isActive(tripNav.to) || (tripNav.label === t('navigation.my_trips') && isActive('/trips'))} />
           {/* Admin Links would go here based on role */}
         </nav>
+
+        <div className="mb-4">
+          <LanguageSwitcher />
+        </div>
 
         <div className="pt-6 border-t border-slate-800">
           <div className="flex items-center gap-3 mb-4 px-2">
@@ -86,7 +93,7 @@ export default function Layout() {
             className="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors w-full"
           >
             <LogOut className="w-4 h-4" />
-            <span>Sign Out</span>
+            <span>{t('navigation.sign_out')}</span>
           </button>
         </div>
       </aside>
@@ -99,10 +106,10 @@ export default function Layout() {
 
       {/* Mobile Bottom Nav */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 z-50 safe-area-bottom">
-        <MobileNavItem to="/" icon={<Calendar />} label="Home" active={location.pathname === '/'} />
-        <MobileNavItem to="/festivals" icon={<Tent />} label="Festivals" active={isActive('/festivals')} />
-        {isSuperAdmin && <MobileNavItem to="/bands" icon={<Music />} label="Bands" active={isActive('/bands')} />}
-        <MobileNavItem to={tripNav.to} icon={<Users />} label="Trips" active={isActive(tripNav.to) || (tripNav.label === 'My Trips' && isActive('/trips'))} />
+        <MobileNavItem to="/" icon={<Calendar />} label={t('navigation.home')} active={location.pathname === '/'} />
+        <MobileNavItem to="/events" icon={<Tent />} label={t('navigation.events')} active={isActive('/events')} />
+        {isSuperAdmin && <MobileNavItem to="/bands" icon={<Music />} label={t('navigation.bands')} active={isActive('/bands')} />}
+        <MobileNavItem to={tripNav.to} icon={<Users />} label={t('navigation.trips')} active={isActive(tripNav.to) || (tripNav.label === t('navigation.my_trips') && isActive('/trips'))} />
       </div>
     </div>
   );

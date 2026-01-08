@@ -22,8 +22,8 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
-                <Route path="/festivals" element={<Festivals />} />
-                <Route path="/festivals/:id" element={<FestivalDetails />} />
+                <Route path="/events" element={<Festivals />} />
+                <Route path="/events/:id" element={<FestivalDetails />} />
                 <Route path="/bands" element={<Bands />} />
                 <Route path="/bands/:id" element={<BandDetails />} />
                 <Route path="/trips" element={<Trips />} />

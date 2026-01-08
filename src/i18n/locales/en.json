@@ -1,0 +1,66 @@
+{
+  "navigation": {
+    "dashboard": "Dashboard",
+    "events": "Events",
+    "bands": "Bands",
+    "trips": "Trips",
+    "discover": "Discover",
+    "my_trip": "My Trip",
+    "my_trips": "My Trips",
+    "sign_out": "Sign Out",
+    "home": "Home"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Error"
+  },
+  "login": {
+    "welcome": "Welcome to FestPlanner!",
+    "welcome_enthusiastic": "Welcome to FestPlanner!!!",
+    "enter_code": "Enter Code",
+    "invited_msg": "You've been invited to an event! Register or log in to cast your votes for shows!",
+    "enter_email_msg": "Enter your email to receive a login code",
+    "code_sent_msg": "We sent a code to {{email}}",
+    "email_label": "Email Address",
+    "send_code_btn": "Send Code",
+    "code_sent_success": "Code sent! Check your email.",
+    "verification_code_label": "Verification Code",
+    "back_btn": "Back",
+    "verify_login_btn": "Verify & Login"
+  },
+  "dashboard": {
+    "title": "My Festival Plans",
+    "subtitle": "Manage your upcoming trips and schedules.",
+    "upcoming_trips": "Upcoming Trips",
+    "view_all": "View All",
+    "manage_trips": "Manage Trips",
+    "no_trips": "No trips planned yet.",
+    "create_trip": "Create new Trip",
+    "popular_festivals": "Popular Events"
+  },
+  "events": {
+    "title": "Events",
+    "subtitle": "Discover and manage music events.",
+    "create_btn": "Create Event",
+    "no_events": "No events found.",
+    "draft": "Draft",
+    "tba": "TBA"
+  },
+  "event_details": {
+    "back_to_events": "Back to Events",
+    "draft": "Draft",
+    "vote_cta": "Vote for best shows",
+    "create_trip_cta": "Create trip and invite friends to start voting!",
+    "see_my_trips_cta": "See my trips to vote for best shows",
+    "stages": "Stages",
+    "add_stage_placeholder": "Add new stage name...",
+    "no_stages": "No stages added yet.",
+    "lineup": "Lineup",
+    "import_json_btn": "Import JSON",
+    "add_show_btn": "Add Show",
+    "all_days": "All Days",
+    "unscheduled": "Unscheduled / TBD Date",
+    "no_shows": "No shows scheduled for this selection.",
+    "stage_tbd": "Stage TBD"
+  }
+}

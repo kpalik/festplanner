@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Loader2, Tent } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface Trip {
   id: string;
@@ -18,6 +19,7 @@ interface Trip {
 }
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -52,16 +54,16 @@ export default function Dashboard() {
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-white mb-2">My Festival Plans</h1>
-        <p className="text-slate-400">Manage your upcoming trips and schedules.</p>
+        <h1 className="text-3xl font-bold text-white mb-2">{t('dashboard.title')}</h1>
+        <p className="text-slate-400">{t('dashboard.subtitle')}</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Upcoming Trips */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-purple-500/30 transition-colors flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-white">Upcoming Trips</h2>
-            <button onClick={() => navigate('/trips')} className="text-sm text-purple-400 hover:text-purple-300 font-medium">View All</button>
+            <h2 className="text-xl font-semibold text-white">{t('dashboard.upcoming_trips')}</h2>
+            <button onClick={() => navigate('/trips')} className="text-sm text-purple-400 hover:text-purple-300 font-medium">{t('dashboard.view_all')}</button>
           </div>
 
           {loading ? (
@@ -90,14 +92,14 @@ export default function Dashboard() {
                 </div>
               ))}
               <button onClick={() => navigate('/trips')} className="w-full py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm text-slate-300 transition mt-2">
-                Manage Trips
+                {t('dashboard.manage_trips')}
               </button>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center flex-1 min-h-[12rem] border-2 border-dashed border-slate-800 rounded-xl text-slate-500">
-              <p>No trips planned yet.</p>
+              <p>{t('dashboard.no_trips')}</p>
               <button onClick={() => navigate('/trips')} className="mt-4 px-4 py-2 bg-slate-800 hover:bg-slate-700 text-purple-400 rounded-lg text-sm font-medium transition-colors">
-                + Create new Trip
+                + {t('dashboard.create_trip')}
               </button>
             </div>
           )}
@@ -105,7 +107,7 @@ export default function Dashboard() {
 
         {/* Placeholder for Festivals (Unchanged for now) */}
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-purple-500/30 transition-colors">
-          <h2 className="text-xl font-semibold mb-4 text-white">Popular Festivals</h2>
+          <h2 className="text-xl font-semibold mb-4 text-white">{t('dashboard.popular_festivals')}</h2>
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-slate-950/50">

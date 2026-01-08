@@ -9,6 +9,7 @@ import { supabase } from '../lib/supabase';
 import { ArrowLeft, Plus, Trash2, MapPin, Calendar, Tent, Loader2, Music, X, Edit, CircleHelp, Heart, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
+import { useTranslation } from 'react-i18next';
 
 interface Festival {
     id: string;
@@ -42,6 +43,7 @@ interface Show {
 }
 
 export default function FestivalDetails() {
+    const { t } = useTranslation();
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const { user, isAdmin } = useAuth();
@@ -230,9 +232,9 @@ export default function FestivalDetails() {
 
     return (
         <div className="max-w-4xl mx-auto">
-            <button onClick={() => navigate('/festivals')} className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors">
+            <button onClick={() => navigate('/events')} className="flex items-center gap-2 text-slate-400 hover:text-white mb-6 transition-colors">
                 <ArrowLeft className="w-5 h-5" />
-                Back to Festivals
+                {t('event_details.back_to_events')}
             </button>
 
             {/* Header */}
@@ -260,7 +262,7 @@ export default function FestivalDetails() {
                             {festival.name}
                             {isAdmin && !festival.is_public && (
                                 <span className="text-xs bg-orange-500/20 text-orange-400 px-2 py-0.5 rounded border border-orange-500/50 uppercase tracking-wider font-bold">
-                                    Draft
+                                    {t('event_details.draft')}
                                 </span>
                             )}
                         </h1>
@@ -287,7 +289,7 @@ export default function FestivalDetails() {
                         className="w-full py-4 text-lg font-bold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-xl shadow-lg shadow-purple-900/20 transform transition-all hover:scale-[1.01] flex items-center justify-center gap-3"
                     >
                         <Tent className="w-6 h-6" />
-                        Create trip and invite friends to start voting!
+                        {t('event_details.create_trip_cta')}
                     </button>
                 ) : userFestivalTrips.length === 1 ? (
                     <button
@@ -295,7 +297,7 @@ export default function FestivalDetails() {
                         className="w-full py-4 text-lg font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl shadow-lg transform transition-all hover:scale-[1.01] flex items-center justify-center gap-3"
                     >
                         <Heart className="w-6 h-6 text-pink-500 fill-pink-500/20" />
-                        Vote for best shows
+                        {t('event_details.vote_cta')}
                     </button>
                 ) : (
                     <button
@@ -303,7 +305,7 @@ export default function FestivalDetails() {
                         className="w-full py-4 text-lg font-bold text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl shadow-lg transform transition-all hover:scale-[1.01] flex items-center justify-center gap-3"
                     >
                         <Users className="w-6 h-6 text-purple-400" />
-                        See my trips to vote for best shows
+                        {t('event_details.see_my_trips_cta')}
                     </button>
                 )}
             </div>
@@ -328,7 +330,7 @@ export default function FestivalDetails() {
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold text-white flex items-center gap-3">
                             <MapPin className="w-6 h-6 text-purple-500" />
-                            Stages
+                            {t('event_details.stages')}
                         </h2>
                         <div className="bg-slate-800 px-3 py-1 rounded-full text-xs font-semibold text-slate-400">
                             {stages.length}
@@ -341,7 +343,7 @@ export default function FestivalDetails() {
                                 <form onSubmit={handleAddStage} className="flex gap-2">
                                     <input
                                         type="text"
-                                        placeholder="Add new stage name..."
+                                        placeholder={t('event_details.add_stage_placeholder')}
                                         className="flex-1 bg-slate-800 border-none rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-purple-500 placeholder-slate-500"
                                         value={newStageName}
                                         onChange={e => setNewStageName(e.target.value)}
@@ -381,7 +383,7 @@ export default function FestivalDetails() {
                             </AnimatePresence>
                             {stages.length === 0 && (
                                 <div className="p-8 text-center text-slate-500 text-sm">
-                                    No stages added yet.
+                                    {t('event_details.no_stages')}
                                 </div>
                             )}
                         </div>
@@ -392,7 +394,7 @@ export default function FestivalDetails() {
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-2xl font-bold text-white flex items-center gap-3">
                             <Music className="w-6 h-6 text-pink-500" />
-                            Lineup
+                            {t('event_details.lineup')}
                         </h2>
                         {isAdmin && (
                             <div className="flex gap-2">
@@ -400,7 +402,7 @@ export default function FestivalDetails() {
                                     onClick={() => setIsImportOpen(true)}
                                     className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium transition-colors"
                                 >
-                                    Import JSON
+                                    {t('event_details.import_json_btn')}
                                 </button>
                                 <button
                                     onClick={() => {
@@ -410,7 +412,7 @@ export default function FestivalDetails() {
                                     className="flex items-center gap-2 px-3 py-1.5 bg-pink-600 hover:bg-pink-500 text-white rounded-lg text-sm font-medium transition-colors"
                                 >
                                     <Plus className="w-4 h-4" />
-                                    Add Show
+                                    {t('event_details.add_show_btn')}
                                 </button>
                             </div>
                         )}
@@ -422,7 +424,7 @@ export default function FestivalDetails() {
                             onClick={() => setSelectedDayLineup('all')}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition whitespace-nowrap ${selectedDayLineup === 'all' ? 'bg-purple-600 text-white' : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'}`}
                         >
-                            All Days
+                            {t('event_details.all_days')}
                         </button>
                         {festivalDays.map(day => {
                             const dStr = day.toISOString().split('T')[0];
@@ -444,7 +446,7 @@ export default function FestivalDetails() {
                             <div className="mb-8 p-4 bg-slate-900 border-2 border-dashed border-slate-700 rounded-xl relative">
                                 <h3 className="text-lg font-bold text-slate-300 mb-4 flex items-center gap-2">
                                     <CircleHelp className="w-5 h-5 text-slate-500" />
-                                    Unscheduled / TBD Date
+                                    {t('event_details.unscheduled')}
                                 </h3>
                                 <div className="space-y-2">
                                     {unscheduledShows.map((show: Show) => (
@@ -457,7 +459,7 @@ export default function FestivalDetails() {
                                                 <div>
                                                     <div className="font-bold text-white text-lg">{show.bands?.name}</div>
                                                     <div className="text-xs text-slate-500 flex gap-2">
-                                                        {stages.find(s => s.id === show.stage_id)?.name || 'Stage TBD'}
+                                                        {stages.find(s => s.id === show.stage_id)?.name || t('event_details.stage_tbd')}
                                                     </div>
                                                 </div>
                                             </div>
@@ -494,7 +496,7 @@ export default function FestivalDetails() {
                         {groupedLineup.length === 0 && unscheduledShows.length === 0 && (
                             <div className="text-center py-12 border-2 border-dashed border-slate-800 rounded-xl text-slate-500">
                                 <Music className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                <p>No shows scheduled for this selection.</p>
+                                <p>{t('event_details.no_shows')}</p>
                             </div>
                         )}
 
@@ -1096,7 +1098,7 @@ function EditFestivalModal({ isOpen, onClose, festival, onUpdated }: { isOpen: b
             try {
                 const { error } = await supabase.from('festivals').delete().eq('id', festival.id);
                 if (error) throw error;
-                navigate('/festivals');
+                navigate('/events');
             } catch (err: any) {
                 console.error(err);
                 alert(err.message);

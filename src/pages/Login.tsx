@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useTranslation } from 'react-i18next';
 import { Mail, Loader2, ArrowRight, KeyRound } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 export default function Login() {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const isInvited = searchParams.get('invited') === 'true';
   const initialEmail = searchParams.get('email') || '';
@@ -30,7 +32,7 @@ export default function Login() {
     } else {
       setMessage({
         type: 'success',
-        text: 'Code sent! Check your email.',
+        text: t('login.code_sent_success'),
       });
       setStep('otp');
       setLoading(false);
@@ -67,15 +69,15 @@ export default function Login() {
             </div>
             <h1 className="text-3xl font-bold text-white mb-2 text-center">
               {step === 'email'
-                ? (isInvited ? 'Welcome to FestPlanner!' : 'Welcome to FestPlanner!!!')
-                : 'Enter Code'}
+                ? (isInvited ? t('login.welcome') : t('login.welcome_enthusiastic'))
+                : t('login.enter_code')}
             </h1>
             <p className="text-slate-400 text-center">
               {step === 'email'
                 ? (isInvited
-                  ? "You've been invited to a festival! Register or log in to cast your votes for shows!"
-                  : 'Enter your email to receive a login code')
-                : `We sent a code to ${email} `}
+                  ? t('login.invited_msg')
+                  : t('login.enter_email_msg'))
+                : t('login.code_sent_msg', { email })}
             </p>
           </div>
 
@@ -83,7 +85,7 @@ export default function Login() {
             <form onSubmit={handleSendOtp} className="space-y-6">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-slate-300 mb-2">
-                  Email Address
+                  {t('login.email_label')}
                 </label>
                 <div className="relative">
                   <input
@@ -110,14 +112,14 @@ export default function Login() {
                 disabled={loading}
                 className="w-full py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span className="flex items-center">Send Code <ArrowRight className="ml-2 w-4 h-4" /></span>}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <span className="flex items-center">{t('login.send_code_btn')} <ArrowRight className="ml-2 w-4 h-4" /></span>}
               </button>
             </form>
           ) : (
             <form onSubmit={handleVerifyOtp} className="space-y-6">
               <div>
                 <label htmlFor="otp" className="block text-sm font-medium text-slate-300 mb-2">
-                  Verification Code
+                  {t('login.verification_code_label')}
                 </label>
                 <div className="relative">
                   <input
@@ -146,14 +148,14 @@ export default function Login() {
                   onClick={() => setStep('email')}
                   className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg transition"
                 >
-                  Back
+                  {t('login.back_btn')}
                 </button>
                 <button
                   type="submit"
                   disabled={loading}
                   className="flex-1 py-3 px-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-medium rounded-lg shadow-lg shadow-purple-500/20 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                 >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Login'}
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('login.verify_login_btn')}
                 </button>
               </div>
             </form>
