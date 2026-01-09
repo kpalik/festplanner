@@ -48,7 +48,8 @@ if (-not (Get-Command pg_dump -ErrorAction SilentlyContinue)) {
     $CommonPaths = @(
         "C:\Program Files\PostgreSQL\*\bin\pg_dump.exe",
         "C:\Program Files (x86)\PostgreSQL\*\bin\pg_dump.exe",
-        "C:\Program Files\PostgreSQL\18\bin\pg_dump.exe"
+        "C:\Program Files\PostgreSQL\18\bin\pg_dump.exe",
+        "T:\PostgreSQL\17\bin\pg_dump.exe"
     )
     $Found = Get-Item $CommonPaths -ErrorAction SilentlyContinue | Select-Object -First 1
     if ($Found) {
@@ -60,8 +61,8 @@ if (-not (Get-Command pg_dump -ErrorAction SilentlyContinue)) {
     }
 }
 
-# Create backups directory if not exists
-$BackupDir = Join-Path $PSScriptRoot "..\backups"
+# Create backups directory (dbdumps)
+$BackupDir = Join-Path $PSScriptRoot "..\dbdumps"
 if (-not (Test-Path $BackupDir)) {
     New-Item -ItemType Directory -Path $BackupDir | Out-Null
     Write-Host "Created backup directory: $BackupDir"

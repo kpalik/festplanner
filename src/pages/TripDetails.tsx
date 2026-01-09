@@ -207,7 +207,21 @@ export default function TripDetails() {
     if (!trip) return false;
     try {
       // 1. Check if profile exists
-      const { data: profile } = await (supabase as any).from('profiles').select('id, email').eq('email', email).maybeSingle();
+      // 1. Check if profile exists
+      let profileId: string | undefined;
+
+      // Try direct select (works if own/colleague/superadmin)
+      const { data: profile } = await (supabase as any).from('profiles').select('id').eq('email', email).maybeSingle();
+      
+      if (profile) {
+        profileId = profile.id;
+      } else {
+        // Fallback: Try secure lookup RPC
+        const { data: rpcData, error: rpcError } = await (supabase as any).rpc('get_profile_id_by_email', { email_input: email });
+        if (!rpcError && rpcData && rpcData.length > 0) {
+          profileId = rpcData[0].id;
+        }
+      }
 
       let insertPayload: any = {
         trip_id: trip.id,
@@ -215,8 +229,8 @@ export default function TripDetails() {
         status: 'pending'
       };
 
-      if (profile) {
-        insertPayload.user_id = profile.id;
+      if (profileId) {
+        insertPayload.user_id = profileId;
       } else {
         // Create pending invite
         insertPayload.invitation_email = email;

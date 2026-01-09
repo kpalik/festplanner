@@ -109,23 +109,26 @@ Gdy wprowadzasz zmiany w kodzie funkcji (np. zmiana szablonu maila, nowa logika)
    ```
    Bez tego kroku, Supabase będzie nadal używać starej wersji funkcji.
 
-## Database Backups
 
-Aby wykonać backup bazy danych Supabase (wersja Free) na lokalny komputer:
+## Database Backups & Schemas
+
+**Best Practice**: Zaleca się wykonywanie zrzutu bazy danych (schema + dane lub samo schema) po każdej istotnej migracji lub zmianie w strukturze bazy. Pozwala to na łatwe odtworzenie środowiska oraz analizę historii zmian.
+
+### Jak wykonać backup:
 
 1. **Wymagania**: Zainstaluj [PostgreSQL Command Line Tools](https://www.postgresql.org/download/windows/) (pg_dump).
 2. **Uruchomienie**:
    Otwórz PowerShell w folderze projektu i uruchom:
-   `powershell
+   ```powershell
    .\scripts\backup_db.ps1
-   ` 
+   ```
 3. **Konfiguracja**:
-   Skrypt poprosi o Connection String przy pierwszym uruchomieniu (znajdziesz go w Supabase Dashboard -> Project Settings -> Database -> Connection string -> URI, Mode: Session).
-   Możesz zapisać go w pliku scripts/backup_config.json, aby nie wpisywać go za każdym razem.
-   
-   Alternatywnie, możesz ustawić zmienną środowiskową SUPABASE_DB_URL:
-   `powershell
-    = "postgres://postgres..."
-   ` 
+   Skrypt poprosi o **Connection String** przy pierwszym uruchomieniu.
+   znajdziesz go w Supabase Dashboard -> Project Settings -> Database -> Connection string -> URI -> Mode: Session.
+   Możesz zapisać go w pliku `scripts/backup_config.json`, aby nie wpisywać go za każdym razem.
 
-Backupy są zapisywane w folderze ackups/ z datą w nazwie pliku. Folder ten jest ignorowany przez git.
+4. **Lokalizacja**:
+   Zrzuty (`.sql`) są zapisywane w folderze `dbdumps/` w głównym katalogu projektu. Folder ten jest dodany do `.gitignore` (aby nie wysyłać dużych plików/danych wrażliwych do repozytorium), ale warto przechowywać lokalnie historię schematów.
+
+### Odtwarzanie
+Aby odtworzyć bazę z pliku, można użyć narzędzia `psql` lub interfejsu klienta SQL (np. DBeaver, pgAdmin), wykonując skrypt SQL z folderu `dbdumps/`.

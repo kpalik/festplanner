@@ -34,7 +34,7 @@ dist-ssr
 *.sw?
 
 # Backups
-backups/
+dbdumps/
 scripts/backups/
 
 scripts/backup_config.json
