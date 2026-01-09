@@ -66,12 +66,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initSession = async () => {
       console.log(`[AuthDebug] ${new Date().toISOString()} initSession started`);
       try {
-        const { data: { session }, error } = await supabase.auth.getSession();
+        // 1. Get session from LocalStorage (fast, helps with initial render)
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
-        if (error) throw error;
+        if (sessionError) throw sessionError;
 
         console.log(`[AuthDebug] ${new Date().toISOString()} getSession result exists:`, !!session);
-        await handleSession(session);
+
+        if (session) {
+             // 2. CRITICAL SECURITY FIX: Verify the token with the server
+             // LocalStorage data can be spoofed (e.g. role: 'superadmin'). 
+             // getUser() sends the token to Supabase Auth which verifies the signature.
+             const { data: { user: verifiedUser }, error: userError } = await supabase.auth.getUser();
+
+             if (userError || !verifiedUser) {
+                 console.error(`[AuthDebug] Token verification failed! Potential spoofing attempt or expired token.`);
+                 // Token is invalid - clear everything
+                 await supabase.auth.signOut();
+                 if (mounted) {
+                     setSession(null);
+                     setUser(null);
+                     setLoading(false);
+                 }
+                 return;
+             }
+
+             // If verification passes, verifiedUser is the source of truth.
+             // We can mix it with the session if needed, but the user object from session might be tainted.
+             // Ideally we reconstruct the session or just trust the verifiedUser for the "user" state.
+             
+             // However, handleSession expects a session object. 
+             // We can keep using the session object but REPLACE the user part with verifiedUser.
+             const safeSession = { ...session, user: verifiedUser };
+             await handleSession(safeSession);
+        } else {
+             await handleSession(null);
+        }
+
       } catch (error) {
         console.error(`[AuthDebug] ${new Date().toISOString()} Error initializing session:`, error);
         if (mounted) setLoading(false);
@@ -82,7 +113,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log(`[AuthDebug] ${new Date().toISOString()} onAuthStateChange event: ${event}`);
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT' || event === 'INITIAL_SESSION') {
+      // IGNORE INITIAL_SESSION: It uses potentially spoofed data from LocalStorage.
+      // We rely on initSession() (above) to fetch and verify the session from Server.
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
         handleSession(session);
       }
     });
