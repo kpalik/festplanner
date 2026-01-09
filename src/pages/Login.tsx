@@ -147,6 +147,8 @@ export default function Login() {
                     </div>
                 )}
 
+                <div className="cf-turnstile flex justify-center mb-4" data-sitekey="0x4AAAAAACLfOboKtS6kl0xJ"></div>
+
                 <button
                     type="submit"
                     disabled={loading}
