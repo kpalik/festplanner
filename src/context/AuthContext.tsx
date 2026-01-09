@@ -12,7 +12,7 @@ interface AuthContextType {
   loading: boolean;
   isAdmin: boolean;
   isSuperAdmin: boolean;
-  signInWithOtp: (email: string) => Promise<{ error: Error | null }>;
+  signInWithOtp: (email: string, captchaToken?: string) => Promise<{ error: Error | null }>;
   verifyOtp: (email: string, token: string) => Promise<{ data: any; error: Error | null }>;
   signOut: () => Promise<{ error: Error | null }>;
 }
@@ -93,12 +93,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  const signInWithOtp = async (email: string) => {
+  const signInWithOtp = async (email: string, captchaToken?: string) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      // We don't specify emailRedirectTo for code-based flow if we want just the code, 
-      // but usually Supabase sends a link unless configured otherwise. 
-      // Ensure Supabase project is set to "Send Email OTP" not just magic link.
+      options: {
+        captchaToken,
+      },
     });
     return { error };
   };

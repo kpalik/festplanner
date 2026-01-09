@@ -6,6 +6,16 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Tent } from 'lucide-react';
 
+declare global {
+  interface Window {
+    turnstile: {
+      render: (container: string | HTMLElement, options: { sitekey: string; callback: (token: string) => void; 'action'?: string }) => string;
+      reset: (widgetId: string) => void;
+      remove: (widgetId: string) => void;
+    };
+  }
+}
+
 export default function Login() {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -17,6 +27,10 @@ export default function Login() {
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const turnstileRef = React.useRef<HTMLDivElement>(null);
+  const widgetIdRef = React.useRef<string | null>(null);
+
   const { signInWithOtp, verifyOtp } = useAuth();
   const navigate = useNavigate();
   const [festivals, setFestivals] = useState<any[]>([]);
@@ -26,17 +40,53 @@ export default function Login() {
       .then(({ data }) => setFestivals(data || []));
   }, []);
 
+  React.useEffect(() => {
+    if (step === 'email' && turnstileRef.current && !widgetIdRef.current) {
+        const renderTurnstile = () => {
+            if (window.turnstile && turnstileRef.current) {
+                // Clear any existing content to be safe
+                turnstileRef.current.innerHTML = '';
+                widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+                    sitekey: '0x4AAAAAACLfOboKtS6kl0xJ',
+                    callback: (token: string) => setCaptchaToken(token),
+                });
+            } else {
+                setTimeout(renderTurnstile, 100);
+            }
+        };
+        renderTurnstile();
+    }
+
+    return () => {
+        if (widgetIdRef.current && window.turnstile) {
+            window.turnstile.remove(widgetIdRef.current);
+            widgetIdRef.current = null;
+        }
+    };
+  }, [step]);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage(null);
 
-    const { error } = await signInWithOtp(email);
+    // Optional: Validate captcha token presence if strictly required on client side
+    // if (!captchaToken) {
+    //    setMessage({ type: 'error', text: 'Please complete the captcha' });
+    //    setLoading(false);
+    //    return;
+    // }
+
+    const { error } = await signInWithOtp(email, captchaToken || undefined);
 
     if (error) {
       setMessage({ type: 'error', text: error.message });
       setLoading(false);
+      // Reset captcha on error
+      if (widgetIdRef.current && window.turnstile) {
+        window.turnstile.reset(widgetIdRef.current);
+        setCaptchaToken(null);
+      }
     } else {
       setMessage({
         type: 'success',
@@ -147,7 +197,7 @@ export default function Login() {
                     </div>
                 )}
 
-                <div className="cf-turnstile flex justify-center mb-4" data-sitekey="0x4AAAAAACLfOboKtS6kl0xJ"></div>
+                <div ref={turnstileRef} className="flex justify-center mb-4"></div>
 
                 <button
                     type="submit"
