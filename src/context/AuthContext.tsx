@@ -27,47 +27,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true;
 
-    const fetchUserRole = async (sessionUser: any) => {
-      const userId = sessionUser.id;
-      console.log(`[AuthDebug] ${new Date().toISOString()} Starting fetchUserRole for ${userId}`);
-      try {
-        // Add timeout for role fetch as well
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error('Role fetch timeout')), 2000)
-        );
-
-        const fetchPromise = supabase.from('profiles').select('role').eq('id', userId).single();
-
-        const { data, error } = await Promise.race([fetchPromise, timeoutPromise]) as any;
-
-        if (error) {
-          if (error.code === 'PGRST116') {
-             console.warn(`[AuthDebug] Profile not found for ${userId}. Creating default profile...`);
-             // Auto-create profile
-             const { error: insertError } = await (supabase as any).from('profiles').insert([{
-                 id: userId,
-                 email: sessionUser.email,
-                 full_name: sessionUser.user_metadata?.full_name || sessionUser.email?.split('@')[0] || 'User',
-                 avatar_url: sessionUser.user_metadata?.avatar_url
-             }]);
-
-             if (insertError) {
-                 console.error(`[AuthDebug] Failed to auto-create profile:`, insertError);
-                 return 'user'; // Fallback
-             }
-             return 'user';
-          }
-          console.warn(`[AuthDebug] ${new Date().toISOString()} Error fetching user role:`, error);
-          return null;
-        }
-        console.log(`[AuthDebug] ${new Date().toISOString()} Fetched role:`, data?.role);
-        return data?.role;
-      } catch (e) {
-        console.error(`[AuthDebug] ${new Date().toISOString()} Exception fetching role:`, e);
-        return null;
-      }
-    };
-
     const handleSession = async (session: Session | null) => {
       if (!mounted) return;
       console.log(`[AuthDebug] ${new Date().toISOString()} Handling session. User: ${session?.user?.id}`);
@@ -85,9 +44,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('[AuthDebug] Error linking invitations:', e);
         }
 
-        const role = await fetchUserRole(currentUser);
-        if (mounted && role) {
-          currentUser = { ...currentUser, role };
+        // SECURE CHANGE: Read role from JWT (app_metadata) instead of easy-to-spoof DB fetch.
+        // The role is synced to app_metadata via a Database Trigger.
+        const role = currentUser.app_metadata?.role as string | undefined;
+        
+        console.log(`[AuthDebug] ${new Date().toISOString()} Role from JWT:`, role);
+        
+        if (role) {
+            currentUser = { ...currentUser, role };
         }
       }
 
@@ -102,38 +66,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const initSession = async () => {
       console.log(`[AuthDebug] ${new Date().toISOString()} initSession started`);
       try {
-        // Create a promise that rejects after 2 seconds
-        const timeoutPromise = new Promise<{ data: { session: Session | null }; error: any }>((_, reject) =>
-          setTimeout(() => reject(new Error('Session fetch timeout')), 2000)
-        );
-
-        // Race the getSession against the timeout
-        const { data: { session } } = await Promise.race([
-          supabase.auth.getSession(),
-          timeoutPromise
-        ]);
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) throw error;
 
         console.log(`[AuthDebug] ${new Date().toISOString()} getSession result exists:`, !!session);
         await handleSession(session);
       } catch (error) {
-        console.error(`[AuthDebug] ${new Date().toISOString()} Error initializing session (or timeout):`, error);
-
-        // Auto-cleanup functionality to fix the "hanging" issue
-        if (error instanceof Error && error.message === 'Session fetch timeout') {
-          console.warn(`[AuthDebug] ${new Date().toISOString()} Timeout detected. Clearing potential stale Supabase storage to self-heal.`);
-          try {
-            Object.keys(localStorage).forEach(key => {
-              if (key.startsWith('sb-')) {
-                localStorage.removeItem(key);
-                console.log(`[AuthDebug] Removed stale key: ${key}`);
-              }
-            });
-          } catch (cleanupError) {
-            console.error('[AuthDebug] Error clearing local storage:', cleanupError);
-          }
-        }
-
-        // If timeout or error, we still want to stop loading eventually
+        console.error(`[AuthDebug] ${new Date().toISOString()} Error initializing session:`, error);
         if (mounted) setLoading(false);
       }
     };
