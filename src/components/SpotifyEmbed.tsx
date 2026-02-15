@@ -11,6 +11,7 @@ interface SpotifyEmbedProps {
 
 export function SpotifyEmbed({ spotifyUrl, className, height = 152 }: SpotifyEmbedProps) {
     const [isLoading, setIsLoading] = useState(true);
+    const resolvedHeight = typeof height === 'number' ? `${height}px` : height;
 
     // Extract Artist ID
     // Supports:
@@ -31,7 +32,7 @@ export function SpotifyEmbed({ spotifyUrl, className, height = 152 }: SpotifyEmb
     const src = `https://open.spotify.com/embed/artist/${artistId}?utm_source=generator&theme=0`;
 
     return (
-        <div className={clsx("relative bg-slate-900 rounded-xl overflow-hidden", className)} style={{ height }}>
+        <div className={clsx("relative bg-slate-900 rounded-xl overflow-hidden", className)} style={{ height: resolvedHeight }}>
             {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-800">
                     <Loader2 className="w-8 h-8 text-green-500 animate-spin" />
@@ -39,16 +40,15 @@ export function SpotifyEmbed({ spotifyUrl, className, height = 152 }: SpotifyEmb
             )}
             <iframe
                 title="Spotify Embed"
-                style={{ borderRadius: '12px' }}
+                style={{ borderRadius: '12px', height: '100%' }}
                 src={src}
                 width="100%"
-                height={height}
                 frameBorder="0"
                 allowFullScreen
                 allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                 loading="lazy"
                 onLoad={() => setIsLoading(false)}
-                className={clsx("relative z-10", isLoading ? "opacity-0" : "opacity-100", "transition-opacity duration-500")}
+                className={clsx("relative z-10 w-full h-full", isLoading ? "opacity-0" : "opacity-100", "transition-opacity duration-500")}
             />
         </div>
     );

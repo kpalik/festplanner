@@ -532,10 +532,37 @@ function WelcomeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
 
 function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpdate }: any) {
   const { t, i18n } = useTranslation();
+  type SortMode = 'default' | 'rating_desc' | 'rating_asc';
   const [selectedDay, setSelectedDay] = useState('all');
   const [playingShowId, setPlayingShowId] = useState<string | null>(null);
   const [hideRated, setHideRated] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortMode, setSortMode] = useState<SortMode>('default');
+
+  const ratingStatsByShow = useMemo(() => {
+    const scoreMap = new Map<string, { total: number; count: number }>();
+
+    interactions.forEach((interaction: any) => {
+      const rating = interaction.interaction_type || 0;
+      if (rating <= 0) return;
+
+      const current = scoreMap.get(interaction.show_id) || { total: 0, count: 0 };
+      scoreMap.set(interaction.show_id, {
+        total: current.total + rating,
+        count: current.count + 1,
+      });
+    });
+
+    const averageMap = new Map<string, { average: number; count: number }>();
+    scoreMap.forEach((value, key) => {
+      averageMap.set(key, {
+        average: value.total / value.count,
+        count: value.count,
+      });
+    });
+
+    return averageMap;
+  }, [interactions]);
 
   // ... (handleVote logic) ... Note: keeping logic intact, just injecting useTranslation
 
@@ -585,25 +612,47 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
     if (s.is_late_night) d.setDate(d.getDate() - 1);
     return d.toISOString().split('T')[0] === selectedDay;
   }).sort((a: Show, b: Show) => {
-    // Sort by type (headliner first)
-    if (a.type === 'headliner' && b.type !== 'headliner') return -1;
-    if (a.type !== 'headliner' && b.type === 'headliner') return 1;
+    const defaultSort = () => {
+      // Sort by type (headliner first)
+      if (a.type === 'headliner' && b.type !== 'headliner') return -1;
+      if (a.type !== 'headliner' && b.type === 'headliner') return 1;
 
-    // Then TBD logic
-    if (a.date_tbd && !b.date_tbd) return 1;
-    if (!a.date_tbd && b.date_tbd) return -1;
+      // Then TBD logic
+      if (a.date_tbd && !b.date_tbd) return 1;
+      if (!a.date_tbd && b.date_tbd) return -1;
 
-    // Then Time
-    if (!a.start_time || !b.start_time) return 0;
-    return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+      // Then Time
+      if (!a.start_time || !b.start_time) return 0;
+      return new Date(a.start_time).getTime() - new Date(b.start_time).getTime();
+    };
+
+    if (sortMode === 'rating_desc' || sortMode === 'rating_asc') {
+      const aRating = ratingStatsByShow.get(a.id);
+      const bRating = ratingStatsByShow.get(b.id);
+
+      const aAvg = aRating?.average ?? 0;
+      const bAvg = bRating?.average ?? 0;
+
+      if (aAvg !== bAvg) {
+        return sortMode === 'rating_desc' ? bAvg - aAvg : aAvg - bAvg;
+      }
+
+      const aCount = aRating?.count ?? 0;
+      const bCount = bRating?.count ?? 0;
+      if (aCount !== bCount) {
+        return bCount - aCount;
+      }
+    }
+
+    return defaultSort();
   });
 
   return (
     <div className="space-y-6">
       {/* Search and Filter Controls */}
-      <div className="flex items-center gap-3 bg-slate-900 border border-slate-800 p-3 rounded-xl sticky top-[73px] z-30 shadow-xl shadow-slate-950/50 backdrop-blur-md bg-slate-900/90 md:relative md:top-0 md:bg-slate-900 md:shadow-none md:p-4">
+      <div className="flex flex-col gap-3 bg-slate-900 border border-slate-800 p-3 rounded-xl sticky top-[73px] z-30 shadow-xl shadow-slate-950/50 backdrop-blur-md bg-slate-900/90 md:relative md:top-0 md:bg-slate-900 md:shadow-none md:p-4 md:flex-row md:items-center">
         {/* Search */}
-        <div className="relative flex-1 min-w-0">
+        <div className="relative w-full min-w-0 md:flex-1">
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -614,19 +663,32 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
           />
         </div>
 
-        {/* Filters */}
-        <label className="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer select-none flex-shrink-0 bg-slate-800/50 px-3 py-2 rounded-lg border border-slate-700/50 hover:bg-slate-800 transition-colors">
-          <div className="relative">
-            <input
-              type="checkbox"
-              checked={hideRated}
-              onChange={(e) => setHideRated(e.target.checked)}
-              className="sr-only peer"
-            />
-            <div className="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
-          </div>
-          <span className="font-medium whitespace-nowrap">{t('trip_details.filters.hide_rated')}</span>
-        </label>
+        <div className="flex w-full gap-3 md:w-auto">
+          {/* Filters */}
+          <label className="flex items-center gap-2 text-xs md:text-sm text-slate-300 cursor-pointer select-none bg-slate-800/50 px-3 py-2 rounded-lg border border-slate-700/50 hover:bg-slate-800 transition-colors">
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={hideRated}
+                onChange={(e) => setHideRated(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-8 h-4 bg-slate-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-blue-600"></div>
+            </div>
+            <span className="font-medium whitespace-nowrap">{t('trip_details.filters.hide_rated')}</span>
+          </label>
+
+          <select
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as SortMode)}
+            className="flex-1 bg-slate-800/80 border border-slate-700 rounded-lg px-3 py-2 text-xs md:text-sm text-slate-200 focus:ring-2 focus:ring-blue-500 outline-none md:flex-none"
+            aria-label="Sort bands"
+          >
+            <option value="default">Sort: Default</option>
+            <option value="rating_desc">Sort: Rating high to low</option>
+            <option value="rating_asc">Sort: Rating low to high</option>
+          </select>
+        </div>
       </div>
 
       {/* Day Filter */}

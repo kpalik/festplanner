@@ -11,6 +11,11 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      workbox: {
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+      },
       includeAssets: ['favicon.png', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
         name: 'FestPlaner',
