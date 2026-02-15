@@ -29,7 +29,7 @@ export function SpotifyEmbed({ spotifyUrl, className, height = 152 }: SpotifyEmb
         return null;
     }
 
-    const src = `https://open.spotify.com/embed/artist/${artistId}?utm_source=generator&theme=0`;
+    const src = `https://open.spotify.com/embed/artist/${artistId}?utm_source=generator`;
 
     return (
         <div className={clsx("relative bg-slate-900 rounded-xl overflow-hidden", className)} style={{ height: resolvedHeight }}>

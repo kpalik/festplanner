@@ -470,6 +470,7 @@ export default function TripDetails() {
               members={members}
               interactions={interactions}
               currentUserId={user?.id}
+              isGroupRankingHidden={trip.is_ranking_hidden}
               onInteractionUpdate={fetchTripData}
             />
           ) : (
@@ -530,7 +531,7 @@ function WelcomeModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => voi
   );
 }
 
-function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpdate }: any) {
+function TripLineup({ shows, days, interactions, currentUserId, isGroupRankingHidden, onInteractionUpdate }: any) {
   const { t, i18n } = useTranslation();
   type SortMode = 'default' | 'rating_desc' | 'rating_asc';
   const [selectedDay, setSelectedDay] = useState('all');
@@ -538,6 +539,18 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
   const [hideRated, setHideRated] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('default');
+
+  const myRatingByShow = useMemo(() => {
+    const map = new Map<string, number>();
+    if (!currentUserId) return map;
+
+    interactions.forEach((interaction: any) => {
+      if (interaction.user_id !== currentUserId) return;
+      map.set(interaction.show_id, interaction.interaction_type || 0);
+    });
+
+    return map;
+  }, [interactions, currentUserId]);
 
   const ratingStatsByShow = useMemo(() => {
     const scoreMap = new Map<string, { total: number; count: number }>();
@@ -627,20 +640,29 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
     };
 
     if (sortMode === 'rating_desc' || sortMode === 'rating_asc') {
-      const aRating = ratingStatsByShow.get(a.id);
-      const bRating = ratingStatsByShow.get(b.id);
+      if (isGroupRankingHidden) {
+        const aMyRating = myRatingByShow.get(a.id) ?? 0;
+        const bMyRating = myRatingByShow.get(b.id) ?? 0;
 
-      const aAvg = aRating?.average ?? 0;
-      const bAvg = bRating?.average ?? 0;
+        if (aMyRating !== bMyRating) {
+          return sortMode === 'rating_desc' ? bMyRating - aMyRating : aMyRating - bMyRating;
+        }
+      } else {
+        const aRating = ratingStatsByShow.get(a.id);
+        const bRating = ratingStatsByShow.get(b.id);
 
-      if (aAvg !== bAvg) {
-        return sortMode === 'rating_desc' ? bAvg - aAvg : aAvg - bAvg;
-      }
+        const aAvg = aRating?.average ?? 0;
+        const bAvg = bRating?.average ?? 0;
 
-      const aCount = aRating?.count ?? 0;
-      const bCount = bRating?.count ?? 0;
-      if (aCount !== bCount) {
-        return bCount - aCount;
+        if (aAvg !== bAvg) {
+          return sortMode === 'rating_desc' ? bAvg - aAvg : aAvg - bAvg;
+        }
+
+        const aCount = aRating?.count ?? 0;
+        const bCount = bRating?.count ?? 0;
+        if (aCount !== bCount) {
+          return bCount - aCount;
+        }
       }
     }
 
@@ -722,7 +744,7 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
             <BandCard
               key={show.id}
               band={show.bands as any}
-              imageHeight="h-72"
+              imageHeight="h-[22rem] md:h-96"
               showCenterPlayButton={true}
               isPlayerOpen={playingShowId === show.id}
               renderPlayerInMediaArea={true}
