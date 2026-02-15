@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { Music, Globe, FileText, Play } from 'lucide-react';
+import { Music, Globe, FileText, Play, X } from 'lucide-react';
 import { BandProfile, type Band } from './BandProfile';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
@@ -17,6 +17,7 @@ interface BandCardProps {
     showCenterPlayButton?: boolean;
     isPlayerOpen?: boolean;
     playerContent?: ReactNode;
+    renderPlayerInMediaArea?: boolean;
 }
 
 export function BandCard({
@@ -31,15 +32,18 @@ export function BandCard({
     imageHeight = "h-64",
     showCenterPlayButton,
     isPlayerOpen,
-    playerContent
+    playerContent,
+    renderPlayerInMediaArea = false
 }: BandCardProps) {
     const [isExpanded, setIsExpanded] = useState(false);
 
     // Determines what to show in the expanded area
     // Player takes precedence over Profile details
     const showPlayer = isPlayerOpen && playerContent;
+    const showPlayerInMediaArea = Boolean(showPlayer && renderPlayerInMediaArea);
+    const showPlayerInExpandedArea = Boolean(showPlayer && !renderPlayerInMediaArea);
     const showDetails = isExpanded && !showPlayer;
-    const isAnyExpanded = showPlayer || showDetails;
+    const isAnyExpanded = showPlayerInExpandedArea || showDetails;
 
     return (
         <div className={clsx("bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-lg group transition-all", isAnyExpanded ? "border-purple-500/50" : "hover:border-purple-500/30", className)}>
@@ -64,7 +68,7 @@ export function BandCard({
                 </div>
 
                 {/* Center Play Button Overlay */}
-                {showCenterPlayButton && band.spotify_url && onPlayClick && (
+                {showCenterPlayButton && band.spotify_url && onPlayClick && !showPlayerInMediaArea && (
                     <div className="absolute inset-0 z-10 flex items-center justify-center opacity-50 group-hover:opacity-100 transition-opacity duration-300">
                         <button
                             onClick={(e) => { e.stopPropagation(); onPlayClick(); }}
@@ -76,46 +80,66 @@ export function BandCard({
                     </div>
                 )}
 
-                {/* Top Right Actions */}
-                <div className="absolute top-2 right-2 z-20 flex gap-2" onClick={e => e.stopPropagation()}>
-                    {topRightActions}
-
-                    {/* Small Play Button (only if NOT showing center button, to avoid redundancy, OR if specifically requested? Usually redundant if center button exists, but let's keep it if caller wants it via logic) */}
-                    {!showCenterPlayButton && onPlayClick && band.spotify_url && (
-                        <button
-                            onClick={onPlayClick}
-                            className="p-1.5 bg-black/40 hover:bg-black/60 backdrop-blur rounded-full text-[#1DB954] hover:text-[#1ed760] transition-colors border border-white/10"
-                            title="Play on Spotify"
-                        >
-                            <Play className="w-4 h-4 fill-current" />
-                        </button>
-                    )}
-
-                    {/* Expand Toggle */}
-                    <button
-                        onClick={() => {
-                            if (isPlayerOpen && onPlayClick) {
-                                // If player is open, clicking this should probably close player and open details?
-                                // Or just toggle details?
-                                // Let's simplisticly just toggle details state.
-                                // If Player is forced open by prop, this button can't close it unless we have a callback to close player.
-                                // But we rely on parent to handle isPlayerOpen.
-                                // For now, this button controls local expansion.
-                            }
-                            setIsExpanded(!isExpanded);
-                        }}
-                        className={clsx(
-                            "p-1.5 backdrop-blur rounded-full text-white transition-all border border-white/10",
-                            (isExpanded && !showPlayer) ? "bg-purple-600/80 hover:bg-purple-600 border-purple-500" : "bg-black/40 hover:bg-black/60"
+                {/* Spotify Player in Media Area */}
+                {showPlayerInMediaArea && (
+                    <div className="absolute inset-0 z-30 p-2 bg-slate-950/95 backdrop-blur-sm" onClick={(e) => e.stopPropagation()}>
+                        {onPlayClick && (
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onPlayClick(); }}
+                                className="absolute top-3 left-3 z-40 p-1.5 bg-black/50 hover:bg-black/70 backdrop-blur rounded-full text-white border border-white/20 transition-colors"
+                                title="Close player"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
                         )}
-                        title={isExpanded ? "Hide Details" : "Show Details"}
-                    >
-                        <FileText className="w-4 h-4" />
-                    </button>
-                </div>
+                        <div className="h-full">
+                            {playerContent}
+                        </div>
+                    </div>
+                )}
+
+                {/* Top Right Actions */}
+                {!showPlayerInMediaArea && (
+                    <div className="absolute top-2 right-2 z-20 flex gap-2" onClick={e => e.stopPropagation()}>
+                        {topRightActions}
+
+                        {/* Small Play Button (only if NOT showing center button, to avoid redundancy, OR if specifically requested? Usually redundant if center button exists, but let's keep it if caller wants it via logic) */}
+                        {!showCenterPlayButton && onPlayClick && band.spotify_url && (
+                            <button
+                                onClick={onPlayClick}
+                                className="p-1.5 bg-black/40 hover:bg-black/60 backdrop-blur rounded-full text-[#1DB954] hover:text-[#1ed760] transition-colors border border-white/10"
+                                title="Play on Spotify"
+                            >
+                                <Play className="w-4 h-4 fill-current" />
+                            </button>
+                        )}
+
+                        {/* Expand Toggle */}
+                        <button
+                            onClick={() => {
+                                if (isPlayerOpen && onPlayClick) {
+                                    // If player is open, clicking this should probably close player and open details?
+                                    // Or just toggle details?
+                                    // Let's simplisticly just toggle details state.
+                                    // If Player is forced open by prop, this button can't close it unless we have a callback to close player.
+                                    // But we rely on parent to handle isPlayerOpen.
+                                    // For now, this button controls local expansion.
+                                }
+                                setIsExpanded(!isExpanded);
+                            }}
+                            className={clsx(
+                                "p-1.5 backdrop-blur rounded-full text-white transition-all border border-white/10",
+                                (isExpanded && !showPlayer) ? "bg-purple-600/80 hover:bg-purple-600 border-purple-500" : "bg-black/40 hover:bg-black/60"
+                            )}
+                            title={isExpanded ? "Hide Details" : "Show Details"}
+                        >
+                            <FileText className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
 
                 {/* Content Overlay */}
-                <div className="absolute inset-x-0 bottom-0 z-10 p-4 flex flex-col justify-end pointer-events-none">
+                <div className={clsx("absolute inset-x-0 bottom-0 z-10 p-4 flex flex-col justify-end pointer-events-none", showPlayerInMediaArea && "hidden")}>
                     {/* Subtitle */}
                     <div className="text-slate-300 text-xs font-medium mb-1 drop-shadow-md">
                         {subtitle || (
@@ -149,7 +173,7 @@ export function BandCard({
                         exit={{ height: 0, opacity: 0 }}
                         className="border-t border-slate-800 bg-slate-950 overflow-hidden"
                     >
-                        {showPlayer ? (
+                        {showPlayerInExpandedArea ? (
                             <div className="p-4 bg-black/50">
                                 {playerContent}
                             </div>

@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, Trash, Music, Edit, Search } from 'lucide-react';
+import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, Trash, Edit, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { BandCard } from '../components/BandCard';
@@ -663,10 +663,11 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
               imageHeight="h-72"
               showCenterPlayButton={true}
               isPlayerOpen={playingShowId === show.id}
+              renderPlayerInMediaArea={true}
               onPlayClick={show.bands.spotify_url ? () => setPlayingShowId(playingShowId === show.id ? null : show.id) : undefined}
               playerContent={
                 show.bands.spotify_url && (
-                  <SpotifyEmbed spotifyUrl={show.bands.spotify_url} height={152} />
+                  <SpotifyEmbed spotifyUrl={show.bands.spotify_url} height="100%" />
                 )
               }
               title={
@@ -697,7 +698,9 @@ function TripLineup({ shows, days, interactions, currentUserId, onInteractionUpd
                     title="Open in Spotify App"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <Music className="w-4 h-4" />
+                    <svg viewBox="0 0 16 16" className="w-4 h-4 fill-current" aria-hidden="true">
+                      <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0Zm3.7 11.53a.5.5 0 0 1-.69.17 7.3 7.3 0 0 0-5.21-.72.5.5 0 1 1-.23-.98 8.3 8.3 0 0 1 5.92.82.5.5 0 0 1 .21.71Zm.98-2.18a.63.63 0 0 1-.86.21 9.15 9.15 0 0 0-6.5-.9.63.63 0 1 1-.3-1.21 10.4 10.4 0 0 1 7.39 1.02.63.63 0 0 1 .27.88Zm.1-2.28a.75.75 0 0 1-1.03.25 11.08 11.08 0 0 0-7.86-1.08.75.75 0 0 1-.36-1.46 12.58 12.58 0 0 1 8.91 1.23.75.75 0 0 1 .34 1.06Z" />
+                    </svg>
                   </a>
                 )
               }
