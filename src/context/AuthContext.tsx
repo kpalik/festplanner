@@ -31,11 +31,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (!mounted) return;
       console.log(`[AuthDebug] ${new Date().toISOString()} Handling session. User: ${session?.user?.id}`);
 
-      // Immediately set loading to true if we have a session to process
-      if (session?.user) {
-        setLoading(true);
-      }
-
       let currentUser = session?.user ?? null;
       if (currentUser) {
         try {
@@ -115,7 +110,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log(`[AuthDebug] ${new Date().toISOString()} onAuthStateChange event: ${event}`);
       // IGNORE INITIAL_SESSION: It uses potentially spoofed data from LocalStorage.
       // We rely on initSession() (above) to fetch and verify the session from Server.
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'SIGNED_OUT') {
+      // TOKEN_REFRESHED happens in the background (often when returning focus to the app)
+      // and should not trigger full auth-loading UI state changes.
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         handleSession(session);
       }
     });

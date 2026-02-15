@@ -36,5 +36,5 @@ dist-ssr
 # Backups
 dbdumps/
 scripts/backups/
-
+backups/
 scripts/backup_config.json
