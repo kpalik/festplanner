@@ -209,7 +209,7 @@ export default function BandDetails() {
                 <div className="p-8">
                     {band.spotify_url && (
                         <div className="mb-8">
-                            <SpotifyEmbed spotifyUrl={band.spotify_url} height={152} />
+                            <SpotifyEmbed spotifyUrl={band.spotify_url} height={352} />
                         </div>
                     )}
                     <BandProfile band={band} />

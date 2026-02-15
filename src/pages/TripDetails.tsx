@@ -751,7 +751,7 @@ function TripLineup({ shows, days, interactions, currentUserId, isGroupRankingHi
               onPlayClick={show.bands.spotify_url ? () => setPlayingShowId(playingShowId === show.id ? null : show.id) : undefined}
               playerContent={
                 show.bands.spotify_url && (
-                  <SpotifyEmbed spotifyUrl={show.bands.spotify_url} height="100%" />
+                  <SpotifyEmbed spotifyUrl={show.bands.spotify_url} height={352} />
                 )
               }
               title={

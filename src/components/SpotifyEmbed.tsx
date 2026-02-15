@@ -9,7 +9,7 @@ interface SpotifyEmbedProps {
 
 }
 
-export function SpotifyEmbed({ spotifyUrl, className, height = 152 }: SpotifyEmbedProps) {
+export function SpotifyEmbed({ spotifyUrl, className, height = 352 }: SpotifyEmbedProps) {
     const [isLoading, setIsLoading] = useState(true);
     const resolvedHeight = typeof height === 'number' ? `${height}px` : height;
 
