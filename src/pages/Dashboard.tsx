@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Loader2, Tent } from 'lucide-react';
+import { Loader2, RefreshCw, Tent } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 
@@ -25,12 +25,21 @@ export default function Dashboard() {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [popularFestivals, setPopularFestivals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showIosRefresh, setShowIosRefresh] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchDashboardData();
     }
   }, [user]);
+
+  useEffect(() => {
+    const isIos = /iPad|iPhone|iPod/.test(window.navigator.userAgent) ||
+      (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+    setShowIosRefresh(isIos && isStandalone);
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -61,11 +70,45 @@ export default function Dashboard() {
     }
   };
 
+  const handleHardRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+      }
+
+      if ('caches' in window) {
+        const cacheKeys = await caches.keys();
+        await Promise.all(cacheKeys.map((cacheKey) => caches.delete(cacheKey)));
+      }
+
+      const refreshedUrl = new URL(window.location.href);
+      refreshedUrl.searchParams.set('refresh', Date.now().toString());
+      window.location.replace(refreshedUrl.toString());
+    } catch (error) {
+      console.error('Hard refresh failed:', error);
+      window.location.reload();
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto">
       <header className="mb-8">
         <h1 className="text-3xl font-bold text-white mb-2">{t('dashboard.title')}</h1>
         <p className="text-slate-400">{t('dashboard.subtitle')}</p>
+        {showIosRefresh && (
+          <button
+            onClick={handleHardRefresh}
+            disabled={isRefreshing}
+            className="mt-4 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-200 hover:bg-slate-800 transition-colors disabled:opacity-60"
+          >
+            {isRefreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+            <span className="text-sm font-medium">Refresh app (iPhone)</span>
+          </button>
+        )}
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
