@@ -101,7 +101,8 @@
     "remove_member_title": "Usuń Uczestnika",
     "tabs": {
       "schedule": "Line-up i Głosy",
-      "ranking": "Ranking Grupy"
+      "ranking": "Ranking Grupy",
+      "timetable": "Harmonogram"
     },
     "filters": {
       "search_placeholder": "Szukaj...",
@@ -110,6 +111,11 @@
     },
     "ranking": {
       "overall": "Ranking Ogólny"
+    },
+    "timetable": {
+      "no_data": "Brak danych harmonogramu.",
+      "no_shows_day": "Brak koncertów w tym dniu.",
+      "stages": "Sceny"
     },
     "welcome_modal": {
       "title": "Wyjazd Utworzony!",

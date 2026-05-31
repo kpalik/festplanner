@@ -2,11 +2,12 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, Trash, Edit, Search } from 'lucide-react';
+import { ArrowLeft, Calendar, Loader2, Tent, Users, UserPlus, Heart, ThumbsUp, ThumbsDown, Trophy, Trash, Edit, Search, LayoutGrid } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { BandCard } from '../components/BandCard';
 import { SpotifyEmbed } from '../components/SpotifyEmbed';
+import { TimetableView } from '../components/TimetableView';
 import { useTranslation } from 'react-i18next';
 
 interface Trip {
@@ -78,7 +79,7 @@ export default function TripDetails() {
   const [shows, setShows] = useState<Show[]>([]);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'schedule' | 'ranking'>('schedule');
+  const [activeTab, setActiveTab] = useState<'schedule' | 'ranking' | 'timetable'>('schedule');
 
   // Member Invite State
   const [isInviteOpen, setIsInviteOpen] = useState(false);
@@ -452,6 +453,13 @@ export default function TripDetails() {
               <Calendar className="w-4 h-4" />
               {t('trip_details.tabs.schedule')}
             </button>
+            <button
+              onClick={() => setActiveTab('timetable')}
+              className={clsx("px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2", activeTab === 'timetable' ? "bg-purple-600 text-white shadow-lg" : "text-slate-400 hover:text-white")}
+            >
+              <LayoutGrid className="w-4 h-4" />
+              {t('trip_details.tabs.timetable')}
+            </button>
             {!trip.is_ranking_hidden && (
               <button
                 onClick={() => setActiveTab('ranking')}
@@ -473,13 +481,19 @@ export default function TripDetails() {
               isGroupRankingHidden={trip.is_ranking_hidden}
               onInteractionUpdate={fetchTripData}
             />
+          ) : activeTab === 'timetable' ? (
+            <TimetableView
+              shows={shows}
+              days={dayTabs}
+              interactions={interactions}
+            />
           ) : (
             <TripRanking
               shows={shows}
               days={dayTabs}
               interactions={interactions}
             />
-          )}
+          )}}
         </div>
       </div>
 

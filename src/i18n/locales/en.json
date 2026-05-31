@@ -114,7 +114,8 @@
     "remove_member_title": "Remove Member",
     "tabs": {
       "schedule": "Lineup & Votes",
-      "ranking": "Group Ranking"
+      "ranking": "Group Ranking",
+      "timetable": "Timetable"
     },
     "filters": {
       "search_placeholder": "Search...",
@@ -123,6 +124,11 @@
     },
     "ranking": {
       "overall": "Overall Ranking"
+    },
+    "timetable": {
+      "no_data": "No schedule data available.",
+      "no_shows_day": "No shows scheduled for this day.",
+      "stages": "Stages"
     },
     "welcome_modal": {
       "title": "Trip Created!",

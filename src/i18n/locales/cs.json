@@ -114,7 +114,8 @@
     "remove_member_title": "Odebrat Člena",
     "tabs": {
       "schedule": "Line-up a Hlasy",
-      "ranking": "Skupinový Žebříček"
+      "ranking": "Skupinový Žebříček",
+      "timetable": "Harmonogram"
     },
     "filters": {
       "search_placeholder": "Hledat...",
@@ -123,6 +124,11 @@
     },
     "ranking": {
       "overall": "Celkový Žebříček"
+    },
+    "timetable": {
+      "no_data": "Žádná data harmonogramu.",
+      "no_shows_day": "Žádná vystoupení v tento den.",
+      "stages": "Pódia"
     },
     "welcome_modal": {
       "title": "Výlet Vytvořen!",
