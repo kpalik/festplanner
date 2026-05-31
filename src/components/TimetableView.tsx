@@ -36,7 +36,6 @@ interface TimetableViewProps {
 // Pixels per minute for the time axis
 const PX_PER_MINUTE = 3;
 const STAGE_ROW_HEIGHT = 56;
-const HEADER_HEIGHT = 40;
 
 export function TimetableView({ shows, days, interactions }: TimetableViewProps) {
   const { t, i18n } = useTranslation();
