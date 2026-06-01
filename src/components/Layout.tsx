@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Calendar, Users, Tent, Music } from 'lucide-react';
+import { LogOut, Calendar, Users, Tent, Music, ChevronLeft, ChevronRight } from 'lucide-react';
 import PwaInstaller from './PwaInstaller';
 import LanguageSwitcher from './LanguageSwitcher';
 import clsx from 'clsx';
@@ -18,6 +18,7 @@ export default function Layout() {
   const [userTrips, setUserTrips] = useState<{ id: string }[]>([]);
   const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
   const [isTimetableFullscreen, setIsTimetableFullscreen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   // Observe body class changes set by TimetableView
   useEffect(() => {
@@ -76,49 +77,96 @@ export default function Layout() {
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex flex-col w-64 bg-slate-900 border-r border-slate-800 p-6">
-        <div className="flex items-center gap-3 mb-10">
-          <img src="/logo.png" className="w-10 h-10 rounded-xl" alt="Logo" />
-          <span className="font-bold text-xl bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">FestPlanner</span>
+      <aside className={clsx(
+        "hidden md:flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 relative flex-shrink-0",
+        sidebarCollapsed ? "w-16 p-3" : "w-64 p-6"
+      )}>
+        {/* Logo */}
+        <div className={clsx(
+          "flex items-center mb-10 overflow-hidden",
+          sidebarCollapsed ? "justify-center" : "gap-3"
+        )}>
+          <img src="/logo.png" className="w-10 h-10 rounded-xl flex-shrink-0" alt="Logo" />
+          {!sidebarCollapsed && (
+            <span className="font-bold text-xl bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent whitespace-nowrap">
+              FestPlanner
+            </span>
+          )}
         </div>
 
+        {/* Nav */}
         <nav className="flex-1 space-y-2">
-          <NavItem to="/" icon={<Calendar />} label={t('navigation.dashboard')} active={location.pathname === '/'} />
-          <div className="pt-4 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">{t('navigation.discover')}</div>
-          <NavItem to="/events" icon={<Tent />} label={t('navigation.events')} active={isActive('/events')} />
-          {isSuperAdmin && <NavItem to="/bands" icon={<Music />} label={t('navigation.bands')} active={isActive('/bands')} />}
-          <NavItem to={tripNav.to} icon={<Users />} label={tripNav.label} active={isActive(tripNav.to) || (tripNav.label === t('navigation.my_trips') && isActive('/trips'))} />
-          {/* Admin Links would go here based on role */}
+          {!sidebarCollapsed && (
+            <div className="pt-0 pb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+              {t('navigation.discover')}
+            </div>
+          )}
+          <NavItem to="/" icon={<Calendar />} label={t('navigation.dashboard')} active={location.pathname === '/'} collapsed={sidebarCollapsed} />
+          <NavItem to="/events" icon={<Tent />} label={t('navigation.events')} active={isActive('/events')} collapsed={sidebarCollapsed} />
+          {isSuperAdmin && <NavItem to="/bands" icon={<Music />} label={t('navigation.bands')} active={isActive('/bands')} collapsed={sidebarCollapsed} />}
+          <NavItem to={tripNav.to} icon={<Users />} label={tripNav.label} active={isActive(tripNav.to) || (tripNav.label === t('navigation.my_trips') && isActive('/trips'))} collapsed={sidebarCollapsed} />
         </nav>
 
-        <div className="mb-4 space-y-2">
+        {/* Bottom actions */}
+        <div className={clsx("mb-4 space-y-2", sidebarCollapsed && "flex flex-col items-center space-y-2")}>
           <button
             onClick={() => setIsAuthorModalOpen(true)}
-            className="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors w-full"
+            className={clsx(
+              "flex items-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors",
+              sidebarCollapsed ? "p-2 justify-center w-full" : "gap-3 px-3 py-2 w-full"
+            )}
+            title={sidebarCollapsed ? t('navigation.author') : undefined}
           >
-            <Heart size={20} />
-            <span>{t('navigation.author')}</span>
+            <Heart size={20} className="flex-shrink-0" />
+            {!sidebarCollapsed && <span>{t('navigation.author')}</span>}
           </button>
-          <LanguageSwitcher />
+          {!sidebarCollapsed && <LanguageSwitcher />}
         </div>
 
-        <div className="pt-6 border-t border-slate-800">
-          <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-sm font-bold">
+        {/* User + logout */}
+        <div className={clsx("pt-4 border-t border-slate-800", sidebarCollapsed ? "flex flex-col items-center gap-3" : "")}>
+          {!sidebarCollapsed && (
+            <div className="flex items-center gap-3 mb-4 px-2">
+              <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-sm font-bold flex-shrink-0">
+                {user?.email?.charAt(0).toUpperCase()}
+              </div>
+              <div className="overflow-hidden">
+                <p className="text-sm font-medium truncate">{user?.email}</p>
+              </div>
+            </div>
+          )}
+          {sidebarCollapsed && (
+            <div
+              className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400 text-sm font-bold"
+              title={user?.email}
+            >
               {user?.email?.charAt(0).toUpperCase()}
             </div>
-            <div className="overflow-hidden">
-              <p className="text-sm font-medium truncate">{user?.email}</p>
-            </div>
-          </div>
+          )}
           <button
             onClick={handleSignOut}
-            className="flex items-center gap-3 px-3 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors w-full"
+            className={clsx(
+              "flex items-center text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-colors",
+              sidebarCollapsed ? "p-2 justify-center w-full" : "gap-3 px-3 py-2 w-full"
+            )}
+            title={sidebarCollapsed ? t('navigation.sign_out') : undefined}
           >
-            <LogOut className="w-4 h-4" />
-            <span>{t('navigation.sign_out')}</span>
+            <LogOut className="w-4 h-4 flex-shrink-0" />
+            {!sidebarCollapsed && <span>{t('navigation.sign_out')}</span>}
           </button>
         </div>
+
+        {/* Collapse toggle — pinned to right edge, vertically centered */}
+        <button
+          onClick={() => setSidebarCollapsed(p => !p)}
+          className="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-6 rounded-full bg-slate-800 border border-slate-600 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center shadow-md transition-colors z-20"
+          title={sidebarCollapsed ? 'Rozwiń sidebar' : 'Zwiń sidebar'}
+        >
+          {sidebarCollapsed
+            ? <ChevronRight className="w-3.5 h-3.5" />
+            : <ChevronLeft className="w-3.5 h-3.5" />
+          }
+        </button>
       </aside>
 
       {/* Main Content */}
@@ -149,17 +197,28 @@ export default function Layout() {
   );
 }
 
-function NavItem({ to, icon, label, active = false }: { to: string; icon: React.ReactElement; label: string; active?: boolean }) {
+function NavItem({ to, icon, label, active = false, collapsed = false }: {
+  to: string;
+  icon: React.ReactElement;
+  label: string;
+  active?: boolean;
+  collapsed?: boolean;
+}) {
   return (
-    <Link to={to} className={clsx(
-      "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors",
-      active ? "bg-purple-500/10 text-purple-400" : "text-slate-400 hover:text-white hover:bg-slate-800"
-    )}>
+    <Link
+      to={to}
+      title={collapsed ? label : undefined}
+      className={clsx(
+        "flex items-center rounded-lg transition-colors",
+        collapsed ? "justify-center p-2" : "gap-3 px-3 py-2",
+        active ? "bg-purple-500/10 text-purple-400" : "text-slate-400 hover:text-white hover:bg-slate-800"
+      )}
+    >
       {/* @ts-ignore */}
       {React.cloneElement(icon, { size: 20 })}
-      <span>{label}</span>
+      {!collapsed && <span>{label}</span>}
     </Link>
-  )
+  );
 }
 
 function MobileNavItem({ to, icon, label, active = false }: { to: string; icon: React.ReactElement; label: string; active?: boolean }) {
@@ -172,5 +231,5 @@ function MobileNavItem({ to, icon, label, active = false }: { to: string; icon: 
       {React.cloneElement(icon, { size: 24 })}
       <span className="text-xs font-medium">{label}</span>
     </Link>
-  )
+  );
 }

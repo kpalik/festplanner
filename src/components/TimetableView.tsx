@@ -376,10 +376,10 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
       )}
     </div>
 
-    {/* Floating fullscreen toggle — always visible in bottom-right */}
+    {/* Floating fullscreen toggle — mobile only, bottom-right */}
     <button
       onClick={toggleFullscreen}
-      className="fixed bottom-20 right-4 md:bottom-6 z-[60] p-2.5 rounded-full bg-slate-800 border border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700 shadow-lg transition-all"
+      className="md:hidden fixed bottom-20 right-4 z-[60] p-2.5 rounded-full bg-slate-800 border border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700 shadow-lg transition-all"
       title={isFullscreen ? 'Wyjdź z trybu pełnoekranowego' : 'Tryb pełnoekranowy'}
     >
       {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
