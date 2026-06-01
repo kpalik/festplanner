@@ -17,6 +17,16 @@ export default function Layout() {
   const location = useLocation();
   const [userTrips, setUserTrips] = useState<{ id: string }[]>([]);
   const [isAuthorModalOpen, setIsAuthorModalOpen] = useState(false);
+  const [isTimetableFullscreen, setIsTimetableFullscreen] = useState(false);
+
+  // Observe body class changes set by TimetableView
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsTimetableFullscreen(document.body.classList.contains('timetable-fullscreen'));
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -49,7 +59,10 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800 sticky top-0 z-40">
+      <div className={clsx(
+        "md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800 sticky top-0 z-40 transition-all duration-300",
+        isTimetableFullscreen && "hidden"
+      )}>
         <div className="flex items-center gap-2">
           <img src="/logo.png" className="w-8 h-8 rounded-lg" alt="Logo" />
           <span className="font-bold text-lg bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">FestPlanner</span>
@@ -116,7 +129,10 @@ export default function Layout() {
       </main>
 
       {/* Mobile Bottom Nav */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 z-50 safe-area-bottom">
+      <div className={clsx(
+        "md:hidden fixed bottom-0 left-0 right-0 bg-slate-900 border-t border-slate-800 flex justify-around p-3 z-50 safe-area-bottom transition-all duration-300",
+        isTimetableFullscreen && "hidden"
+      )}>
         <MobileNavItem to="/" icon={<Calendar />} label={t('navigation.home')} active={location.pathname === '/'} />
         <MobileNavItem to="/events" icon={<Tent />} label={t('navigation.events')} active={isActive('/events')} />
         {isSuperAdmin && <MobileNavItem to="/bands" icon={<Music />} label={t('navigation.bands')} active={isActive('/bands')} />}

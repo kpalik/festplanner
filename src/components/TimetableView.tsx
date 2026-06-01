@@ -1,6 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
+import { ChevronsLeft, ChevronsRight, Maximize2, Minimize2 } from 'lucide-react';
 
 interface Show {
   id: string;
@@ -40,7 +41,31 @@ const STAGE_ROW_HEIGHT = 56;
 export function TimetableView({ shows, days, interactions }: TimetableViewProps) {
   const { t, i18n } = useTranslation();
   const [selectedDay, setSelectedDay] = useState<string>('');
+  const [collapsedStages, setCollapsedStages] = useState<Set<string>>(new Set());
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const toggleStage = (stageId: string) => {
+    setCollapsedStages(prev => {
+      const next = new Set(prev);
+      if (next.has(stageId)) next.delete(stageId);
+      else next.add(stageId);
+      return next;
+    });
+  };
+
+  const toggleFullscreen = () => {
+    setIsFullscreen(prev => {
+      const next = !prev;
+      document.body.classList.toggle('timetable-fullscreen', next);
+      return next;
+    });
+  };
+
+  // Clean up class on unmount
+  useEffect(() => {
+    return () => { document.body.classList.remove('timetable-fullscreen'); };
+  }, []);
 
   // Auto-select first day
   useEffect(() => {
@@ -221,17 +246,36 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
                 </span>
               </div>
               {/* Stage names */}
-              {stages.map((stage) => (
-                <div
-                  key={stage.id}
-                  className="border-b border-slate-800 flex items-center px-3"
-                  style={{ height: STAGE_ROW_HEIGHT }}
-                >
-                  <span className="text-xs text-slate-300 font-medium truncate max-w-[140px]" title={stage.name}>
-                    {stage.name}
-                  </span>
-                </div>
-              ))}
+              {stages.map((stage) => {
+                const collapsed = collapsedStages.has(stage.id);
+                return (
+                  <div
+                    key={stage.id}
+                    className="border-b border-slate-800 flex items-center gap-1 px-2 transition-all duration-200"
+                    style={{ height: STAGE_ROW_HEIGHT, width: collapsed ? 52 : 164 }}
+                  >
+                    <button
+                      onClick={() => toggleStage(stage.id)}
+                      className="flex-shrink-0 p-0.5 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
+                      title={collapsed ? stage.name : 'Zwiń scenę'}
+                    >
+                      {collapsed
+                        ? <ChevronsRight className="w-3.5 h-3.5" />
+                        : <ChevronsLeft className="w-3.5 h-3.5" />
+                      }
+                    </button>
+                    {collapsed ? (
+                      <span className="text-xs text-slate-500 font-mono font-bold tracking-widest select-none">
+                        {stage.name.slice(0, 3).toUpperCase()}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-300 font-medium truncate" title={stage.name}>
+                        {stage.name}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Scrollable time grid */}
@@ -327,5 +371,14 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
         </div>
       )}
     </div>
+
+    {/* Floating fullscreen toggle — always visible in bottom-left */}
+    <button
+      onClick={toggleFullscreen}
+      className="fixed bottom-20 left-4 md:bottom-6 z-[60] p-2.5 rounded-full bg-slate-800 border border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700 shadow-lg transition-all"
+      title={isFullscreen ? 'Wyjdź z trybu pełnoekranowego' : 'Tryb pełnoekranowy'}
+    >
+      {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+    </button>
   );
 }
