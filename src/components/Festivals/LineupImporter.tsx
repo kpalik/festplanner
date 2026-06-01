@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import { Loader2, Upload, AlertCircle, Check } from 'lucide-react';
+import { Loader2, Upload, AlertCircle, Check, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ImportItem {
@@ -149,7 +149,7 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
             // 2. Refresh bands to get all IDs
             addLog('Resolving artist IDs...');
             const { data: allBands } = await (supabase as any).from('bands').select('id, name');
-            const bandMap = new Map(allBands?.map((b: any) => [b.name.toLowerCase(), b.id]));
+            const bandMap = new Map<string, string>(allBands?.map((b: any) => [b.name.toLowerCase() as string, b.id as string]));
 
             // 2b. Create missing stages
             const newStages = items.filter(i => i.is_new_stage);
@@ -168,7 +168,7 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
 
             // 3. Resolve Stages (Refresh to get IDs including new ones)
             const { data: refreshedStages } = await (supabase as any).from('stages').select('id, name').eq('festival_id', festivalId);
-            const stageMap = new Map(refreshedStages?.map((s: any) => [s.name.toLowerCase(), s.id]));
+            const stageMap = new Map<string, string>(refreshedStages?.map((s: any) => [s.name.toLowerCase() as string, s.id as string]));
 
             // 4. Create or Update Shows
             // Re-fetch existing shows to have up-to-date band→show mapping (in case of re-run)
@@ -346,6 +346,12 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
                                             >
                                                 {loading && <Loader2 className="w-4 h-4 animate-spin" />}
                                                 Preview Import
+                                                <span className="relative group ml-1">
+                                                    <HelpCircle className="w-4 h-4 text-purple-300 opacity-70 group-hover:opacity-100 transition" />
+                                                    <span className="pointer-events-none absolute bottom-full right-0 mb-2 w-56 rounded-lg bg-slate-800 border border-slate-600 px-3 py-2 text-xs text-slate-300 shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-10 text-left leading-relaxed">
+                                                        Żadne dane nie zostaną jeszcze zapisane. Zobaczysz tylko podgląd tego, co system odczytał z JSON — możesz wtedy zdecydować czy potwierdzić import.
+                                                    </span>
+                                                </span>
                                             </button>
                                         </div>
                                     </div>
