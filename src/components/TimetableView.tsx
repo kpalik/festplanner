@@ -45,16 +45,6 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
   const [isFullscreen, setIsFullscreen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const allCollapsed = stages.length > 0 && stages.every(s => collapsedStages.has(s.id));
-
-  const toggleAllStages = () => {
-    if (allCollapsed) {
-      setCollapsedStages(new Set());
-    } else {
-      setCollapsedStages(new Set(stages.map(s => s.id)));
-    }
-  };
-
   const toggleFullscreen = () => {
     setIsFullscreen(prev => {
       const next = !prev;
@@ -116,6 +106,16 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
     });
     return Array.from(stageMap.values()).sort((a, b) => a.firstTime - b.firstTime);
   }, [dayShows]);
+
+  const allCollapsed = stages.length > 0 && stages.every(s => collapsedStages.has(s.id));
+
+  const toggleAllStages = () => {
+    if (allCollapsed) {
+      setCollapsedStages(new Set());
+    } else {
+      setCollapsedStages(new Set(stages.map(s => s.id)));
+    }
+  };
 
   // Calculate time range for the day
   const timeRange = useMemo(() => {
