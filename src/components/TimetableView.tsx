@@ -209,7 +209,8 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
   }
 
   return (
-    <div className="space-y-4">
+    <>
+      <div className="space-y-4">
       {/* Day selector */}
       <div className="flex flex-wrap gap-2">
         {days.map((d) => {
@@ -380,5 +381,6 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
     >
       {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
     </button>
+    </>
   );
 }
