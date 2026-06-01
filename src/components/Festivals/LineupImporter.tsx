@@ -198,19 +198,30 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
 
                     if (item.start_time) {
                         const [h] = item.start_time.split(':').map(Number);
-                        const d = new Date(`${dateStr}T${item.start_time}:00`);
 
+                        // Late night = show starts after midnight (00:00–05:59).
+                        // The JSON date is the "festival day" (e.g. Tuesday), but the
+                        // actual calendar date is the next day (Wednesday 01:00).
+                        // FestivalDetails subtracts 1 day when is_late_night=true, so
+                        // we must add 1 day to the stored timestamp to compensate.
                         if (h < 6) is_late_night = true;
 
-                        if (is_late_night) {
-                            d.setDate(d.getDate() + 1);
-                        }
-
+                        const d = new Date(`${dateStr}T${item.start_time}:00`);
+                        if (is_late_night) d.setDate(d.getDate() + 1);
                         start_time = d.toISOString();
 
                         if (item.end_time) {
+                            const [hEnd, mEnd] = item.end_time.split(':').map(Number);
                             const dEnd = new Date(`${dateStr}T${item.end_time}:00`);
-                            if (is_late_night) dEnd.setDate(dEnd.getDate() + 1);
+
+                            if (is_late_night) {
+                                // start is already pushed to next calendar day, end follows
+                                dEnd.setDate(dEnd.getDate() + 1);
+                            } else if (hEnd < h || (hEnd === h && mEnd < parseInt(item.start_time.split(':')[1]))) {
+                                // end_time is earlier than start_time on the clock → crosses midnight
+                                dEnd.setDate(dEnd.getDate() + 1);
+                            }
+
                             end_time = dEnd.toISOString();
                         }
                     } else {
