@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Search, Loader2, X, Edit, RefreshCw } from 'lucide-react';
+import { Plus, Search, Loader2, X, Edit, RefreshCw, Unlink, Trash2, AlertTriangle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ImageUpload } from '../components/ImageUpload';
 import { EditBandModal, type Band } from '../components/EditBandModal';
@@ -18,6 +18,7 @@ export default function Bands() {
     const [search, setSearch] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isImportOpen, setIsImportOpen] = useState(false);
+    const [isOrphansOpen, setIsOrphansOpen] = useState(false);
     const [selectedBand, setSelectedBand] = useState<Band | null>(null);
     const [playingBand, setPlayingBand] = useState<Band | null>(null);
 
@@ -265,6 +266,14 @@ export default function Bands() {
                                 Bulk Sync
                             </button>
                             <button
+                                onClick={() => setIsOrphansOpen(true)}
+                                className="px-4 py-2 bg-slate-800 hover:bg-red-900/40 text-slate-400 hover:text-red-400 border border-transparent hover:border-red-500/30 rounded-lg transition-all font-medium whitespace-nowrap hidden sm:flex items-center gap-2"
+                                title="Show bands with no shows in any festival"
+                            >
+                                <Unlink className="w-4 h-4" />
+                                Orphans
+                            </button>
+                            <button
                                 onClick={() => setIsCreateOpen(true)}
                                 className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-lg transition-all font-medium shadow-lg shadow-purple-500/20 whitespace-nowrap"
                             >
@@ -342,12 +351,165 @@ export default function Bands() {
                 onClose={() => setPlayingBand(null)}
                 band={playingBand}
             />
+            <OrphansModal
+                isOpen={isOrphansOpen}
+                onClose={() => setIsOrphansOpen(false)}
+                onDeleted={fetchBands}
+            />
 
         </div>
     );
 }
 
 
+
+function OrphansModal({ isOpen, onClose, onDeleted }: { isOpen: boolean; onClose: () => void; onDeleted: () => void }) {
+    const [orphans, setOrphans] = useState<Band[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) fetchOrphans();
+    }, [isOpen]);
+
+    const fetchOrphans = async () => {
+        setLoading(true);
+        try {
+            // Get all band IDs that have at least one show
+            const { data: showBands } = await (supabase as any)
+                .from('shows')
+                .select('band_id');
+
+            const usedIds = new Set((showBands || []).map((s: any) => s.band_id));
+
+            const { data: allBands } = await (supabase as any)
+                .from('bands')
+                .select('*')
+                .order('name');
+
+            setOrphans((allBands || []).filter((b: Band) => !usedIds.has(b.id)));
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const deleteAll = async () => {
+        if (!confirm(`Permanently delete ${orphans.length} bands with no shows? This cannot be undone.`)) return;
+        setDeleting(true);
+        try {
+            const ids = orphans.map(b => b.id);
+            const { error } = await (supabase as any)
+                .from('bands')
+                .delete()
+                .in('id', ids);
+            if (error) throw error;
+            onDeleted();
+            onClose();
+        } catch (err: any) {
+            alert('Error: ' + err.message);
+        } finally {
+            setDeleting(false);
+        }
+    };
+
+    return (
+        <AnimatePresence>
+            {isOpen && (
+                <>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
+                        onClick={onClose}
+                    />
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                        className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none p-4"
+                    >
+                        <div className="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl pointer-events-auto flex flex-col max-h-[80vh]">
+                            {/* Header */}
+                            <div className="flex items-center justify-between p-6 border-b border-slate-800">
+                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <Unlink className="w-5 h-5 text-red-400" />
+                                    Orphan Bands
+                                </h2>
+                                <button onClick={onClose} className="p-2 hover:bg-slate-800 rounded-full text-slate-400 hover:text-white transition">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Body */}
+                            <div className="flex-1 overflow-y-auto p-6">
+                                {loading ? (
+                                    <div className="flex justify-center py-8">
+                                        <Loader2 className="w-6 h-6 text-purple-500 animate-spin" />
+                                    </div>
+                                ) : orphans.length === 0 ? (
+                                    <div className="text-center py-8 text-slate-400">
+                                        <Unlink className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                                        <p>No orphan bands found. All bands have at least one show.</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="flex items-center gap-2 mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+                                            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+                                            <span>{orphans.length} band{orphans.length !== 1 ? 's' : ''} with no shows in any festival.</span>
+                                        </div>
+                                        <div className="space-y-1">
+                                            {orphans.map(band => (
+                                                <div key={band.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-800/50 transition">
+                                                    {band.image_url ? (
+                                                        <img src={band.image_url} alt={band.name} className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                                                    ) : (
+                                                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 text-slate-500 text-xs font-bold">
+                                                            {band.name.charAt(0).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <span className="text-slate-200 text-sm font-medium flex-1 truncate">{band.name}</span>
+                                                    {band.origin_country && (
+                                                        <span className="text-xs text-slate-500 flex-shrink-0">{band.origin_country}</span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Footer */}
+                            {!loading && orphans.length > 0 && (
+                                <div className="p-6 border-t border-slate-800 flex justify-end gap-3">
+                                    <button
+                                        onClick={onClose}
+                                        className="px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition"
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        onClick={deleteAll}
+                                        disabled={deleting}
+                                        className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-medium transition flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        {deleting
+                                            ? <Loader2 className="w-4 h-4 animate-spin" />
+                                            : <Trash2 className="w-4 h-4" />
+                                        }
+                                        Delete all {orphans.length}
+                                    </button>
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                </>
+            )}
+        </AnimatePresence>
+    );
+}
 
 function CreateBandModal({ isOpen, onClose, onCreated }: { isOpen: boolean; onClose: () => void; onCreated: () => void }) {
     const [formData, setFormData] = useState({
