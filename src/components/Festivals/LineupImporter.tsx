@@ -21,6 +21,7 @@ interface ProcessedItem extends ImportItem {
     resolved_stage_id?: string;
     resolved_stage_name?: string;
     is_new_stage?: boolean;
+    existing_show_id?: string; // set if a show for this artist already exists in this festival
 }
 
 interface LineupImporterProps {
@@ -57,8 +58,16 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
 
             // Fetch stages for this festival
             const { data: festStages } = await (supabase as any).from('stages').select('id, name').eq('festival_id', festivalId);
-            // setStages(festStages || []); // Unused state
             const stageMap = new Map<string, any>(festStages?.map((s: any) => [s.name.toLowerCase(), s]));
+
+            // Fetch existing shows for this festival (to detect duplicates by band)
+            const { data: existingShows } = await (supabase as any)
+                .from('shows')
+                .select('id, band_id')
+                .eq('festival_id', festivalId);
+            const existingShowsByBand = new Map<string, string>(
+                existingShows?.map((s: any) => [s.band_id, s.id]) ?? []
+            );
 
             for (const item of parsed) {
                 if (!item.artist_name) continue;
@@ -69,6 +78,10 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
                 if (item.stage_name) {
                     resolvedStage = stageMap.get(item.stage_name.toLowerCase());
                 }
+
+                const existingShowId = existing?.id
+                    ? existingShowsByBand.get(existing.id)
+                    : undefined;
 
                 processed.push({
                     artist_name: item.artist_name,
@@ -83,7 +96,8 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
                     artist_id: existing?.id,
                     resolved_stage_id: resolvedStage?.id,
                     resolved_stage_name: resolvedStage?.name,
-                    is_new_stage: !!(item.stage_name && !resolvedStage)
+                    is_new_stage: !!(item.stage_name && !resolvedStage),
+                    existing_show_id: existingShowId
                 });
             }
 
@@ -156,13 +170,23 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
             const { data: refreshedStages } = await (supabase as any).from('stages').select('id, name').eq('festival_id', festivalId);
             const stageMap = new Map(refreshedStages?.map((s: any) => [s.name.toLowerCase(), s.id]));
 
-            // 4. Create Shows
-            addLog(`Creating ${items.length} shows...`);
-            const showPayloads = items.map(item => {
-                const bandId = bandMap.get(item.artist_name.toLowerCase());
-                if (!bandId) return null; // Should not happen if creation worked
+            // 4. Create or Update Shows
+            // Re-fetch existing shows to have up-to-date band→show mapping (in case of re-run)
+            const { data: currentShows } = await (supabase as any)
+                .from('shows')
+                .select('id, band_id')
+                .eq('festival_id', festivalId);
+            const currentShowsByBand = new Map<string, string>(
+                currentShows?.map((s: any) => [s.band_id, s.id]) ?? []
+            );
 
-                // Resolve Stage ID again (now including newly created ones)
+            const toInsert: any[] = [];
+            const toUpdate: { id: string; payload: any }[] = [];
+
+            for (const item of items) {
+                const bandId = bandMap.get(item.artist_name.toLowerCase());
+                if (!bandId) continue;
+
                 const stageId = item.stage_name ? stageMap.get(item.stage_name.toLowerCase()) : null;
 
                 let start_time = null;
@@ -170,28 +194,14 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
                 let is_late_night = false;
 
                 if (!item.date_tbd && item.date) {
-                    // Logic to build timestamp
-                    // Assuming date is YYYY-MM-DD
                     const dateStr = item.date;
 
                     if (item.start_time) {
-                        // HH:MM
                         const [h] = item.start_time.split(':').map(Number);
                         const d = new Date(`${dateStr}T${item.start_time}:00`);
 
-                        // Detect late night (00:00 - 05:00)
-                        // If user says date is 12.06 and time is 01:00, usually they mean night after 12.06
-                        // In FestivalDetails logic: "if is_late_night, showDate.setDate(showDate.getDate() - 1);"
-                        // So if the stored date is 2026-06-13 01:00, and is_late_night=true, it shows up on 12th.
-
-                        // Here we just store strict date provided. If time is 01:00, checks if it is late night.
                         if (h < 6) is_late_night = true;
 
-                        // Important: If input JSON says "Date: 2026-06-12", "Time: 01:00", 
-                        // Does that mean 12th night (technically 13th morning)?
-                        // Usually existing tools might format it strictly. 
-                        // Let's assume input date is the "Festival Day". 
-                        // If time is 01:00, we add 1 day to calendar date.
                         if (is_late_night) {
                             d.setDate(d.getDate() + 1);
                         }
@@ -201,19 +211,16 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
                         if (item.end_time) {
                             const dEnd = new Date(`${dateStr}T${item.end_time}:00`);
                             if (is_late_night) dEnd.setDate(dEnd.getDate() + 1);
-                            // Handle crossing midnight manually if end < start?
-                            // Simple approach: Use strict input
                             end_time = dEnd.toISOString();
                         }
                     } else {
-                        // Date only
                         const d = new Date(dateStr);
-                        d.setHours(12, 0, 0, 0); // Noon default
+                        d.setHours(12, 0, 0, 0);
                         start_time = d.toISOString();
                     }
                 }
 
-                return {
+                const payload = {
                     festival_id: festivalId,
                     band_id: bandId,
                     stage_id: stageId || null,
@@ -223,12 +230,33 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
                     date_tbd: item.date_tbd,
                     time_tbd: !item.start_time
                 };
-            }).filter(Boolean);
 
-            const { error: showsError } = await (supabase as any).from('shows').insert(showPayloads);
-            if (showsError) throw showsError;
+                const existingShowId = currentShowsByBand.get(bandId);
+                if (existingShowId) {
+                    toUpdate.push({ id: existingShowId, payload });
+                } else {
+                    toInsert.push(payload);
+                }
+            }
 
-            addLog('Success! All shows imported.');
+            if (toInsert.length > 0) {
+                addLog(`Creating ${toInsert.length} new shows...`);
+                const { error: insertError } = await (supabase as any).from('shows').insert(toInsert);
+                if (insertError) throw insertError;
+            }
+
+            if (toUpdate.length > 0) {
+                addLog(`Updating ${toUpdate.length} existing shows...`);
+                for (const { id, payload } of toUpdate) {
+                    const { error: updateError } = await (supabase as any)
+                        .from('shows')
+                        .update(payload)
+                        .eq('id', id);
+                    if (updateError) throw updateError;
+                }
+            }
+
+            addLog(`Done! ${toInsert.length} created, ${toUpdate.length} updated.`);
             setTimeout(() => {
                 onSuccess();
                 onClose();
@@ -320,6 +348,9 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
                                                 <span className="ml-2">
                                                     New Artists: <strong className="text-green-400">{items.filter(i => i.is_new_artist).length}</strong>
                                                 </span>
+                                                <span className="ml-2">
+                                                    Update existing: <strong className="text-yellow-400">{items.filter(i => i.existing_show_id).length}</strong>
+                                                </span>
                                             </div>
                                             <button onClick={() => setStep('input')} className="text-sm text-purple-400 hover:text-purple-300">
                                                 Edit JSON
@@ -342,6 +373,7 @@ export function LineupImporter({ isOpen, onClose, festivalId, onSuccess }: Lineu
                                                             <td className="p-3 font-medium text-white">
                                                                 {item.artist_name}
                                                                 {item.is_new_artist && <span className="ml-2 text-[10px] bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded border border-green-500/30">NEW</span>}
+                                                                {item.existing_show_id && <span className="ml-2 text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded border border-yellow-500/30">UPDATE</span>}
                                                             </td>
                                                             <td className="p-3 text-slate-400">
                                                                 {item.stage_name ? (
