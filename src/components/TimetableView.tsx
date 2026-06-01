@@ -202,7 +202,7 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
 
   const formatTime = (dateStr: string) => {
     const d = new Date(dateStr);
-    return d.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString(i18n.language, { hour: '2-digit', minute: '2-digit', hour12: false });
   };
 
   if (days.length === 0) {
