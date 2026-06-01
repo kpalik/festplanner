@@ -78,7 +78,7 @@ export default function Layout() {
 
       {/* Desktop Sidebar */}
       <aside className={clsx(
-        "hidden md:flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 relative flex-shrink-0",
+        "hidden md:flex flex-col bg-slate-900 border-r border-slate-800 transition-all duration-300 fixed top-0 left-0 h-screen z-30 flex-shrink-0",
         sidebarCollapsed ? "w-16 p-3" : "w-64 p-6"
       )}>
         {/* Logo */}
@@ -156,10 +156,11 @@ export default function Layout() {
           </button>
         </div>
 
-        {/* Collapse toggle — pinned to right edge, vertically centered */}
+        {/* Collapse toggle — fixed to viewport center-left, aligned to sidebar edge */}
         <button
           onClick={() => setSidebarCollapsed(p => !p)}
-          className="absolute top-1/2 -translate-y-1/2 -right-3 w-6 h-6 rounded-full bg-slate-800 border border-slate-600 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center shadow-md transition-colors z-20"
+          style={{ left: sidebarCollapsed ? '52px' : '252px' }}
+          className="fixed top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-slate-800 border border-slate-600 text-slate-400 hover:text-white hover:bg-slate-700 flex items-center justify-center shadow-md transition-all duration-300 z-40"
           title={sidebarCollapsed ? 'Rozwiń sidebar' : 'Zwiń sidebar'}
         >
           {sidebarCollapsed
@@ -170,7 +171,10 @@ export default function Layout() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-slate-950 p-4 pb-24 md:p-8 md:pb-8">
+      <main className={clsx(
+        "flex-1 overflow-auto bg-slate-950 p-4 pb-24 md:p-8 md:pb-8 transition-all duration-300",
+        sidebarCollapsed ? "md:ml-16" : "md:ml-64"
+      )}>
         <Outlet />
         <PwaInstaller />
         <AuthorModal isOpen={isAuthorModalOpen} onClose={() => setIsAuthorModalOpen(false)} />
