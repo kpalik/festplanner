@@ -45,13 +45,14 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
   const [isFullscreen, setIsFullscreen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const toggleStage = (stageId: string) => {
-    setCollapsedStages(prev => {
-      const next = new Set(prev);
-      if (next.has(stageId)) next.delete(stageId);
-      else next.add(stageId);
-      return next;
-    });
+  const allCollapsed = stages.length > 0 && stages.every(s => collapsedStages.has(s.id));
+
+  const toggleAllStages = () => {
+    if (allCollapsed) {
+      setCollapsedStages(new Set());
+    } else {
+      setCollapsedStages(new Set(stages.map(s => s.id)));
+    }
   };
 
   const toggleFullscreen = () => {
@@ -239,44 +240,46 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
           {/* Scrollable timetable */}
           <div className="flex">
             {/* Fixed stage labels column */}
-            <div className="flex-shrink-0 border-r border-slate-700 bg-slate-900 z-10">
-              {/* Header spacer */}
-              <div className="h-10 border-b border-slate-700 flex items-center px-3">
-                <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">
-                  {t('trip_details.timetable.stages')}
-                </span>
+            <div
+              className="flex-shrink-0 border-r border-slate-700 bg-slate-900 z-10 transition-all duration-200"
+              style={{ width: allCollapsed ? 44 : 164 }}
+            >
+              {/* Header with single collapse toggle */}
+              <div className="h-10 border-b border-slate-700 flex items-center justify-between px-2">
+                {!allCollapsed && (
+                  <span className="text-xs text-slate-500 font-medium uppercase tracking-wider">
+                    {t('trip_details.timetable.stages')}
+                  </span>
+                )}
+                <button
+                  onClick={toggleAllStages}
+                  className="flex-shrink-0 p-0.5 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors ml-auto"
+                  title={allCollapsed ? 'Rozwiń sceny' : 'Zwiń sceny'}
+                >
+                  {allCollapsed
+                    ? <ChevronsRight className="w-3.5 h-3.5" />
+                    : <ChevronsLeft className="w-3.5 h-3.5" />
+                  }
+                </button>
               </div>
               {/* Stage names */}
-              {stages.map((stage) => {
-                const collapsed = collapsedStages.has(stage.id);
-                return (
-                  <div
-                    key={stage.id}
-                    className="border-b border-slate-800 flex items-center gap-1 px-2 transition-all duration-200"
-                    style={{ height: STAGE_ROW_HEIGHT, width: collapsed ? 52 : 164 }}
-                  >
-                    <button
-                      onClick={() => toggleStage(stage.id)}
-                      className="flex-shrink-0 p-0.5 rounded text-slate-500 hover:text-slate-300 hover:bg-slate-800 transition-colors"
-                      title={collapsed ? stage.name : 'Zwiń scenę'}
-                    >
-                      {collapsed
-                        ? <ChevronsRight className="w-3.5 h-3.5" />
-                        : <ChevronsLeft className="w-3.5 h-3.5" />
-                      }
-                    </button>
-                    {collapsed ? (
-                      <span className="text-xs text-slate-500 font-mono font-bold tracking-widest select-none">
-                        {stage.name.slice(0, 3).toUpperCase()}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-slate-300 font-medium truncate" title={stage.name}>
-                        {stage.name}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
+              {stages.map((stage) => (
+                <div
+                  key={stage.id}
+                  className="border-b border-slate-800 flex items-center px-2"
+                  style={{ height: STAGE_ROW_HEIGHT }}
+                >
+                  {allCollapsed ? (
+                    <span className="text-xs text-slate-500 font-mono font-bold tracking-widest select-none w-full text-center">
+                      {stage.name.slice(0, 3).toUpperCase()}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-slate-300 font-medium truncate" title={stage.name}>
+                      {stage.name}
+                    </span>
+                  )}
+                </div>
+              ))}
             </div>
 
             {/* Scrollable time grid */}
@@ -373,10 +376,10 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
       )}
     </div>
 
-    {/* Floating fullscreen toggle — always visible in bottom-left */}
+    {/* Floating fullscreen toggle — always visible in bottom-right */}
     <button
       onClick={toggleFullscreen}
-      className="fixed bottom-20 left-4 md:bottom-6 z-[60] p-2.5 rounded-full bg-slate-800 border border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700 shadow-lg transition-all"
+      className="fixed bottom-20 right-4 md:bottom-6 z-[60] p-2.5 rounded-full bg-slate-800 border border-slate-600 text-slate-300 hover:text-white hover:bg-slate-700 shadow-lg transition-all"
       title={isFullscreen ? 'Wyjdź z trybu pełnoekranowego' : 'Tryb pełnoekranowy'}
     >
       {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
