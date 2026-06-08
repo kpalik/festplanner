@@ -680,10 +680,6 @@ export function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showTo
                     setEndTime(new Date(showToEdit.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
                 }
 
-                if (showToEdit.end_time && !showToEdit.time_tbd) {
-                    setEndTime(new Date(showToEdit.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
-                }
-
                 if (showToEdit.duration) setDuration(showToEdit.duration);
                 setIsLateNight(!!showToEdit.is_late_night);
                 setShowType(showToEdit.type || 'normal');
@@ -707,8 +703,10 @@ export function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showTo
         if (isDateTbd) setIsTimeTbd(true);
     }, [isDateTbd]);
 
-    // Auto-detect Late Night when Start Time changes
+    // Auto-detect Late Night when Start Time changes — only for new shows (not when editing)
+    const isEditing = !!showToEdit;
     useEffect(() => {
+        if (isEditing) return; // don't override is_late_night when editing an existing show
         if (!startTime) return;
         const [hours] = startTime.split(':').map(Number);
         if (hours >= 0 && hours < 6) {
