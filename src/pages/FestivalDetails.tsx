@@ -608,7 +608,7 @@ export default function FestivalDetails() {
     );
 }
 
-function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showToEdit }: { isOpen: boolean; onClose: () => void; festival: Festival; stages: Stage[]; onSuccess: () => void; showToEdit: Show | null }) {
+export function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showToEdit }: { isOpen: boolean; onClose: () => void; festival: Festival; stages: Stage[]; onSuccess: () => void; showToEdit: Show | null }) {
     const [bands, setBands] = useState<{ id: string, name: string }[]>([]);
 
     // Form State

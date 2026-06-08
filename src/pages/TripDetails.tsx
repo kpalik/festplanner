@@ -8,6 +8,7 @@ import clsx from 'clsx';
 import { BandCard } from '../components/BandCard';
 import { SpotifyEmbed } from '../components/SpotifyEmbed';
 import { TimetableView } from '../components/TimetableView';
+import { ShowModal } from './FestivalDetails';
 import { useTranslation } from 'react-i18next';
 
 interface Trip {
@@ -67,6 +68,11 @@ interface Interaction {
   user_email?: string;
 }
 
+interface Stage {
+  id: string;
+  name: string;
+}
+
 export default function TripDetails() {
   const { t, i18n } = useTranslation();
   const { id } = useParams<{ id: string }>();
@@ -78,6 +84,7 @@ export default function TripDetails() {
   const [members, setMembers] = useState<TripMember[]>([]);
   const [shows, setShows] = useState<Show[]>([]);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
+  const [stages, setStages] = useState<Stage[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'schedule' | 'ranking' | 'timetable'>('schedule');
 
@@ -85,6 +92,8 @@ export default function TripDetails() {
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isWelcomeModalOpen, setIsWelcomeModalOpen] = useState(false);
+  const [editingShow, setEditingShow] = useState<Show | null>(null);
+  const [isShowModalOpen, setIsShowModalOpen] = useState(false);
 
   const isOrganizer = useMemo(() => {
     if (!user || !trip) return false;
@@ -145,6 +154,14 @@ export default function TripDetails() {
       setMembers(membersData || []);
 
       if (tripData.festival_id) {
+        // Fetch Stages
+        const { data: stagesData } = await (supabase as any)
+          .from('stages')
+          .select('id, name')
+          .eq('festival_id', tripData.festival_id)
+          .order('name');
+        setStages(stagesData || []);
+
         // Fetch Shows
         const { data: showsData } = await (supabase as any)
           .from('shows')
@@ -483,6 +500,8 @@ export default function TripDetails() {
             shows={shows}
             days={dayTabs}
             interactions={interactions}
+            canEdit={isOrganizer}
+            onEditShow={(show) => { setEditingShow(show as any); setIsShowModalOpen(true); }}
           />
         ) : (
           <TripRanking
@@ -498,6 +517,17 @@ export default function TripDetails() {
         onClose={() => setIsInviteOpen(false)}
         onInvite={handleInvite}
       />
+
+      {trip?.festivals && (
+        <ShowModal
+          isOpen={isShowModalOpen}
+          onClose={() => { setIsShowModalOpen(false); setEditingShow(null); }}
+          festival={trip.festivals as any}
+          stages={stages}
+          onSuccess={fetchTripData}
+          showToEdit={editingShow as any}
+        />
+      )}
 
       <EditTripModal
         isOpen={isEditOpen}

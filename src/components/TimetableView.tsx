@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
-import { ChevronsLeft, ChevronsRight, Maximize2, Minimize2 } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, Maximize2, Minimize2, Pencil } from 'lucide-react';
 
 interface Show {
   id: string;
@@ -32,13 +32,15 @@ interface TimetableViewProps {
   shows: Show[];
   days: Date[];
   interactions: Interaction[];
+  canEdit?: boolean;
+  onEditShow?: (show: Show) => void;
 }
 
 // Pixels per minute for the time axis
 const PX_PER_MINUTE = 3;
 const STAGE_ROW_HEIGHT = 56;
 
-export function TimetableView({ shows, days, interactions }: TimetableViewProps) {
+export function TimetableView({ shows, days, interactions, canEdit = false, onEditShow }: TimetableViewProps) {
   const { t, i18n } = useTranslation();
   const [selectedDay, setSelectedDay] = useState<string>('');
   const [collapsedStages, setCollapsedStages] = useState<Set<string>>(new Set());
@@ -362,6 +364,16 @@ export function TimetableView({ shows, days, interactions }: TimetableViewProps)
                               <span className="absolute bottom-0.5 left-2 text-[9px] text-slate-400 font-mono">
                                 {formatTime(show.start_time!)}–{formatTime(show.end_time!)}
                               </span>
+                            )}
+                            {/* Edit button for admins/owners */}
+                            {canEdit && onEditShow && (
+                              <button
+                                onClick={(e) => { e.stopPropagation(); onEditShow(show); }}
+                                className="absolute top-0.5 right-0.5 p-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity bg-slate-900/70 hover:bg-slate-900 text-slate-300 hover:text-white"
+                                title="Edytuj występ"
+                              >
+                                <Pencil className="w-2.5 h-2.5" />
+                              </button>
                             )}
                           </div>
                         );
