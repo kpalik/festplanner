@@ -780,28 +780,24 @@ export function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showTo
             let finalEndISO = null;
 
             if (!isDateTbd) {
-                // Determine Date
-                const dateStr = selectedDate;
-                let finalDate = new Date(dateStr);
-
-                if (isLateNight) {
-                    finalDate.setDate(finalDate.getDate() + 1);
-                }
+                // Parse selectedDate (YYYY-MM-DD) in local time to avoid UTC midnight shift bugs
+                const [year, month, day] = selectedDate.split('-').map(Number);
 
                 if (!isTimeTbd) {
                     const [startH, startM] = startTime.split(':').map(Number);
-                    finalDate.setHours(startH, startM, 0, 0);
+
+                    // For late night: the show is displayed under the selected day but
+                    // physically occurs in the early hours of the next calendar day.
+                    // We store the actual clock time on the next day.
+                    const startDay = isLateNight ? day + 1 : day;
+                    const finalDate = new Date(year, month - 1, startDay, startH, startM, 0, 0);
                     finalStartISO = finalDate.toISOString();
 
-                    // End Time
-                    const finalEnd = new Date(finalDate);
-                    finalEnd.setMinutes(finalEnd.getMinutes() + duration);
+                    const finalEnd = new Date(finalDate.getTime() + duration * 60 * 1000);
                     finalEndISO = finalEnd.toISOString();
                 } else {
-                    // Date known, Time TBD
-                    // Store strict date at 12:00 to imply middle of day? Or 00:00?
-                    // Let's use 12:00 to be safe from TZ shifts to prev day
-                    finalDate.setHours(12, 0, 0, 0);
+                    // Date known, Time TBD — store at noon local time to avoid TZ shifts
+                    const finalDate = new Date(year, month - 1, day, 12, 0, 0, 0);
                     finalStartISO = finalDate.toISOString();
                 }
             }
