@@ -500,6 +500,7 @@ export default function TripDetails() {
             shows={shows}
             days={dayTabs}
             interactions={interactions}
+            memberCount={members.filter(m => m.user_id).length}
             canEdit={isOrganizer}
             onEditShow={(show) => { setEditingShow(show as any); setIsShowModalOpen(true); }}
           />

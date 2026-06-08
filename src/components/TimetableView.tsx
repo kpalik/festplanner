@@ -1,7 +1,7 @@
 import { useMemo, useState, useRef, useEffect } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
-import { ChevronsLeft, ChevronsRight, Maximize2, Minimize2, Pencil } from 'lucide-react';
+import { ChevronsLeft, ChevronsRight, Maximize2, Minimize2, Pencil, AlertTriangle } from 'lucide-react';
 
 interface Show {
   id: string;
@@ -34,13 +34,14 @@ interface TimetableViewProps {
   interactions: Interaction[];
   canEdit?: boolean;
   onEditShow?: (show: Show) => void;
+  memberCount?: number;
 }
 
 // Pixels per minute for the time axis
 const PX_PER_MINUTE = 3;
 const STAGE_ROW_HEIGHT = 56;
 
-export function TimetableView({ shows, days, interactions, canEdit = false, onEditShow }: TimetableViewProps) {
+export function TimetableView({ shows, days, interactions, canEdit = false, onEditShow, memberCount }: TimetableViewProps) {
   const { t, i18n } = useTranslation();
   const [selectedDay, setSelectedDay] = useState<string>('');
   const [collapsedStages, setCollapsedStages] = useState<Set<string>>(new Set());
@@ -94,6 +95,16 @@ export function TimetableView({ shows, days, interactions, canEdit = false, onEd
     return avg;
   }, [interactions]);
 
+  // Count how many members voted per show
+  const voterCountByShow = useMemo(() => {
+    const map = new Map<string, number>();
+    interactions.forEach((i) => {
+      if ((i.interaction_type || 0) > 0) {
+        map.set(i.show_id, (map.get(i.show_id) || 0) + 1);
+      }
+    });
+    return map;
+  }, [interactions]);
   // Filter shows for selected day that have valid times
   const dayShows = useMemo(() => {
     if (!selectedDay) return [];
@@ -381,6 +392,14 @@ export function TimetableView({ shows, days, interactions, canEdit = false, onEd
                                   </span>
                                 );
                               })()}
+                              {memberCount !== undefined && memberCount > 0 && (voterCountByShow.get(show.id) ?? 0) < memberCount && (
+                                <span
+                                  className="flex-shrink-0 text-yellow-400"
+                                  title={`Zagłosowało ${voterCountByShow.get(show.id) ?? 0} z ${memberCount} uczestników`}
+                                >
+                                  <AlertTriangle className="w-3 h-3" />
+                                </span>
+                              )}
                             </div>
                             {/* Time label on hover / always if space */}
                             {width > 100 && (
