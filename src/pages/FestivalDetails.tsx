@@ -650,8 +650,6 @@ export function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showTo
             fetchBands();
             if (stages.length > 0 && !stageId) setStageId(stages[0].id);
             if (festivalDays.length > 0 && !selectedDate) setSelectedDate(festivalDays[0].toISOString().split('T')[0]);
-            setDuration(60);
-            updateEndTime();
 
             if (showToEdit) {
                 // Populate form
@@ -670,27 +668,36 @@ export function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showTo
                 if (showToEdit.start_time) {
                     const d = new Date(showToEdit.start_time);
                     if (showToEdit.is_late_night) d.setDate(d.getDate() - 1);
-                    setSelectedDate(d.toISOString().split('T')[0]);
+                    // Use local date string to avoid UTC midnight shift
+                    setSelectedDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
 
                     if (!showToEdit.time_tbd) {
                         setStartTime(new Date(showToEdit.start_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
                     }
                 }
 
-                if (showToEdit.duration) setDuration(showToEdit.duration);
-                // End time calc handled by effect but we can set it explicitly if needed
+                if (showToEdit.end_time && !showToEdit.time_tbd) {
+                    setEndTime(new Date(showToEdit.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
+                }
 
+                if (showToEdit.end_time && !showToEdit.time_tbd) {
+                    setEndTime(new Date(showToEdit.end_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }));
+                }
+
+                if (showToEdit.duration) setDuration(showToEdit.duration);
                 setIsLateNight(!!showToEdit.is_late_night);
                 setShowType(showToEdit.type || 'normal');
 
             } else {
-                // Info: Defaults
+                // Defaults for new show
                 setBandId('');
                 setIsDateTbd(true);
                 setIsTimeTbd(true);
                 setIsLateNight(false);
                 setShowType('normal');
-                if (!startTime) setStartTime('18:00'); // Only set default if not editing
+                setDuration(60);
+                setEndTime('');
+                if (!startTime) setStartTime('18:00');
             }
         }
     }, [isOpen, showToEdit]);
@@ -798,8 +805,18 @@ export function ShowModal({ isOpen, onClose, festival, stages, onSuccess, showTo
                     const finalDate = new Date(year, month - 1, startDay, startH, startM, 0, 0);
                     finalStartISO = finalDate.toISOString();
 
-                    const finalEnd = new Date(finalDate.getTime() + duration * 60 * 1000);
-                    finalEndISO = finalEnd.toISOString();
+                    // Use endTime state if available (user may have edited it directly),
+                    // otherwise fall back to duration-based calculation.
+                    if (endTime) {
+                        const [endH, endM] = endTime.split(':').map(Number);
+                        // End time is on the same day as start, unless it wraps past midnight
+                        const endTotalMin = endH * 60 + endM;
+                        const startTotalMin = startH * 60 + startM;
+                        const endDay = endTotalMin < startTotalMin ? startDay + 1 : startDay;
+                        finalEndISO = new Date(year, month - 1, endDay, endH, endM, 0, 0).toISOString();
+                    } else {
+                        finalEndISO = new Date(finalDate.getTime() + duration * 60 * 1000).toISOString();
+                    }
                 } else {
                     // Date known, Time TBD — store at noon local time to avoid TZ shifts
                     const finalDate = new Date(year, month - 1, day, 12, 0, 0, 0);

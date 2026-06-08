@@ -171,12 +171,11 @@ export function TimetableView({ shows, days, interactions, canEdit = false, onEd
     const startHour = startDate.getHours();
     const startMinute = startHour * 60;
 
-    // Round up to nearest hour for end
-    const endHour = endDate.getMinutes() > 0 ? endDate.getHours() + 1 : endDate.getHours();
-    // Handle next-day overflow for late night shows
-    const endMinute = endDate.getDate() !== startDate.getDate()
-      ? 24 * 60 + endHour * 60
-      : endHour * 60;
+    // Round up to nearest hour for end — use absolute minutes from start of timeline
+    // to handle late night shows that cross midnight (e.g. 01:30 = 25:30 relative to 16:00 start)
+    const diffMs = endDate.getTime() - new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startHour, 0, 0, 0).getTime();
+    const diffMinutes = Math.ceil(diffMs / 60000);
+    const endMinute = startMinute + Math.ceil(diffMinutes / 60) * 60;
 
     return { startMinute, endMinute, startHour, endHour: endMinute / 60 };
   }, [dayShows]);
@@ -222,8 +221,17 @@ export function TimetableView({ shows, days, interactions, canEdit = false, onEd
     let startMin = start.getHours() * 60 + start.getMinutes();
     let endMin = end.getHours() * 60 + end.getMinutes();
 
-    // Handle next-day overflow
+    // If show crosses midnight or end is before start on the clock,
+    // add 24h to bring it into the continuation of the timeline
     if (end.getDate() !== start.getDate() || endMin < startMin) {
+      endMin += 24 * 60;
+    }
+
+    // If the show starts before the timeline origin (e.g. late night at 01:30
+    // but the day starts at 16:00), wrap the start forward by 24h so it lands
+    // on the right side of midnight on the virtual timeline.
+    if (startMin < timeRange.startMinute) {
+      startMin += 24 * 60;
       endMin += 24 * 60;
     }
 
