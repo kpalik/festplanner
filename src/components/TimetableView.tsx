@@ -79,6 +79,21 @@ export function TimetableView({ shows, days, interactions, canEdit = false, onEd
     return map;
   }, [interactions]);
 
+  // Calculate average score per show
+  const avgByShow = useMemo(() => {
+    const totals = new Map<string, { sum: number; count: number }>();
+    interactions.forEach((i) => {
+      const val = i.interaction_type || 0;
+      if (val > 0) {
+        const cur = totals.get(i.show_id) || { sum: 0, count: 0 };
+        totals.set(i.show_id, { sum: cur.sum + val, count: cur.count + 1 });
+      }
+    });
+    const avg = new Map<string, number>();
+    totals.forEach(({ sum, count }, id) => avg.set(id, sum / count));
+    return avg;
+  }, [interactions]);
+
   // Filter shows for selected day that have valid times
   const dayShows = useMemo(() => {
     if (!selectedDay) return [];
@@ -353,11 +368,19 @@ export function TimetableView({ shows, days, interactions, canEdit = false, onEd
                               >
                                 {show.bands.name}
                               </span>
-                              {score !== undefined && score > 0 && (
-                                <span className="flex-shrink-0 text-[10px] font-bold bg-blue-500/30 text-blue-300 px-1 py-0.5 rounded">
-                                  {score}
-                                </span>
-                              )}
+                              {score !== undefined && score > 0 && (() => {
+                                const avg = avgByShow.get(show.id);
+                                const colorClass = avg !== undefined
+                                  ? avg >= 7 ? "bg-green-500/30 text-green-300"
+                                  : avg < 5  ? "bg-red-500/30 text-red-300"
+                                  : "bg-blue-500/30 text-blue-300"
+                                  : "bg-blue-500/30 text-blue-300";
+                                return (
+                                  <span className={`flex-shrink-0 text-[10px] font-bold px-1 py-0.5 rounded ${colorClass}`}>
+                                    {score}
+                                  </span>
+                                );
+                              })()}
                             </div>
                             {/* Time label on hover / always if space */}
                             {width > 100 && (
