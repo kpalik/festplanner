@@ -11,6 +11,11 @@ import { TimetableView } from '../components/TimetableView';
 import { ShowModal } from './FestivalDetails';
 import { useTranslation } from 'react-i18next';
 
+// Extract YYYY-MM-DD in LOCAL timezone (avoids UTC midnight shift bugs)
+function toLocalDateStr(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 interface Trip {
   id: string;
   name: string;
@@ -664,7 +669,7 @@ function TripLineup({ shows, days, interactions, currentUserId, isGroupRankingHi
 
     const d = new Date(s.start_time);
     if (s.is_late_night) d.setDate(d.getDate() - 1);
-    return d.toISOString().split('T')[0] === selectedDay;
+    return toLocalDateStr(d) === selectedDay;
   }).sort((a: Show, b: Show) => {
     const defaultSort = () => {
       // Sort by type (headliner first)
@@ -763,7 +768,7 @@ function TripLineup({ shows, days, interactions, currentUserId, isGroupRankingHi
           {t('trip_details.filters.all_days')}
         </button>
         {days.map((d: Date) => {
-          const val = d.toISOString().split('T')[0];
+          const val = toLocalDateStr(d);
           return (
             <button
               key={val}
@@ -904,7 +909,7 @@ function TripRanking({ shows, days, interactions }: any) {
         if (s.date_tbd || !s.start_time) return false;
         const d = new Date(s.start_time);
         if (s.is_late_night) d.setDate(d.getDate() - 1);
-        return d.toISOString().split('T')[0] === selectedDay;
+        return toLocalDateStr(d) === selectedDay;
       });
     }
 
@@ -933,7 +938,7 @@ function TripRanking({ shows, days, interactions }: any) {
           {t('trip_details.ranking.overall')}
         </button>
         {days.map((d: Date) => {
-          const val = d.toISOString().split('T')[0];
+          const val = toLocalDateStr(d);
           return (
             <button
               key={val}

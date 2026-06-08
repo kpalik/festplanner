@@ -11,6 +11,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 
+// Extract YYYY-MM-DD in LOCAL timezone (avoids UTC midnight shift bugs)
+function toLocalDateStr(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 interface Festival {
     id: string;
     name: string;
@@ -79,14 +84,14 @@ export default function FestivalDetails() {
 
         return daysToRender.map(day => {
             if (isNaN(day.getTime())) return null;
-            const dateStr = day.toISOString().split('T')[0];
+            const dateStr = toLocalDateStr(day);
             const dayShows = shows.filter(show => {
                 // If Date is TBD, skip
                 if (show.date_tbd || !show.start_time) return false;
 
                 const showDate = new Date(show.start_time);
                 if (show.is_late_night) showDate.setDate(showDate.getDate() - 1);
-                return showDate.toISOString().split('T')[0] === dateStr;
+                return toLocalDateStr(showDate) === dateStr;
             });
 
             return {
@@ -427,7 +432,7 @@ export default function FestivalDetails() {
                             {t('event_details.all_days')}
                         </button>
                         {festivalDays.map(day => {
-                            const dStr = day.toISOString().split('T')[0];
+                            const dStr = toLocalDateStr(day);
                             return (
                                 <button
                                     key={dStr}

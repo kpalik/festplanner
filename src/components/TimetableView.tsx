@@ -41,6 +41,11 @@ interface TimetableViewProps {
 const PX_PER_MINUTE = 3;
 const STAGE_ROW_HEIGHT = 56;
 
+// Extract YYYY-MM-DD in LOCAL timezone (avoids UTC midnight shift bugs)
+function toLocalDateStr(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 export function TimetableView({ shows, days, interactions, canEdit = false, onEditShow, memberCount }: TimetableViewProps) {
   const { t, i18n } = useTranslation();
   const [selectedDay, setSelectedDay] = useState<string>('');
@@ -64,7 +69,7 @@ export function TimetableView({ shows, days, interactions, canEdit = false, onEd
   // Auto-select first day
   useEffect(() => {
     if (days.length > 0 && !selectedDay) {
-      setSelectedDay(days[0].toISOString().split('T')[0]);
+      setSelectedDay(toLocalDateStr(days[0]));
     }
   }, [days, selectedDay]);
 
@@ -112,7 +117,7 @@ export function TimetableView({ shows, days, interactions, canEdit = false, onEd
       if (s.date_tbd || s.time_tbd || !s.start_time || !s.end_time) return false;
       const d = new Date(s.start_time);
       if (s.is_late_night) d.setDate(d.getDate() - 1);
-      return d.toISOString().split('T')[0] === selectedDay;
+      return toLocalDateStr(d) === selectedDay;
     });
   }, [shows, selectedDay]);
 
@@ -243,7 +248,7 @@ export function TimetableView({ shows, days, interactions, canEdit = false, onEd
       {/* Day selector */}
       <div className="flex flex-wrap gap-2">
         {days.map((d) => {
-          const val = d.toISOString().split('T')[0];
+          const val = toLocalDateStr(d);
           return (
             <button
               key={val}
