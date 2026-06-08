@@ -106,7 +106,7 @@ export function TimetableView({ shows, days, interactions, canEdit = false, onEd
         if (t < existing.firstTime) existing.firstTime = t;
       }
     });
-    return Array.from(stageMap.values()).sort((a, b) => a.firstTime - b.firstTime);
+    return Array.from(stageMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [dayShows]);
 
   const allCollapsed = stages.length > 0 && stages.every(s => collapsedStages.has(s.id));
