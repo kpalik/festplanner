@@ -401,7 +401,7 @@ export function TimetableView({ shows, days, interactions, canEdit = false, onEd
                                   : "bg-blue-500/30 text-blue-300";
                                 return (
                                   <span className={`flex-shrink-0 text-[10px] font-bold px-1 py-0.5 rounded ${colorClass}`}>
-                                    {score}
+                                    {avg !== undefined ? avg.toFixed(1) : score}
                                   </span>
                                 );
                               })()}
